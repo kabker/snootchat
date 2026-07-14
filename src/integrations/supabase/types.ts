@@ -149,14 +149,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_chat_accepted: {
-        Args: { _chat: string; _user: string }
-        Returns: boolean
-      }
-      is_chat_member: {
-        Args: { _chat: string; _user: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
