@@ -342,7 +342,7 @@ function ChatThread() {
               </button>
             ))}
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">Only your sent messages use this color — everyone else sees gray from you? No — everyone sees your color; you set your own.</p>
+          <p className="mt-3 text-xs text-muted-foreground">Only your sent messages use this color. Each person picks their own.</p>
         </Sheet>
       )}
 
