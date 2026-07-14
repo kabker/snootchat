@@ -1,0 +1,427 @@
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar } from "@/components/Avatar";
+import { bubbleClasses, BUBBLE_COLORS, CHAT_BACKGROUNDS, type BubbleColor, type PresetId } from "@/lib/chat-presets";
+import { resolveStorageUrl, uploadFile } from "@/lib/storage";
+import { ArrowLeft, Check, CheckCheck, Image as ImageIcon, Palette, Send, Settings, Users, X } from "lucide-react";
+import { findUserByUsername } from "@/lib/chats";
+
+export const Route = createFileRoute("/_authenticated/chats/$chatId")({
+  component: ChatThread,
+});
+
+type Chat = {
+  id: string;
+  is_group: boolean;
+  name: string | null;
+  background_type: string;
+  background_value: string;
+  created_by: string;
+};
+type Member = {
+  chat_id: string;
+  user_id: string;
+  status: "pending" | "accepted" | "declined";
+  bubble_color: BubbleColor;
+  role: "member" | "owner";
+  profile: { id: string; username: string; display_name: string; avatar_url: string | null };
+};
+type Message = {
+  id: string;
+  chat_id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+  delivered_at: string | null;
+};
+
+function ChatThread() {
+  const { chatId } = Route.useParams();
+  const { userId } = Route.useRouteContext();
+  const navigate = useNavigate();
+
+  const [chat, setChat] = useState<Chat | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [showBg, setShowBg] = useState(false);
+  const [showBubble, setShowBubble] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
+  const [customBgUrl, setCustomBgUrl] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const myMembership = members.find((m) => m.user_id === userId);
+  const others = members.filter((m) => m.user_id !== userId);
+  const otherAccepted = others.filter((m) => m.status === "accepted");
+
+  async function loadAll() {
+    const [{ data: c }, { data: m }] = await Promise.all([
+      supabase.from("chats").select("*").eq("id", chatId).single(),
+      supabase
+        .from("chat_members")
+        .select("chat_id, user_id, status, bubble_color, role, profiles!inner(id, username, display_name, avatar_url)")
+        .eq("chat_id", chatId),
+    ]);
+    if (c) setChat(c as Chat);
+    if (m) {
+      setMembers(
+        m.map((row) => ({
+          chat_id: row.chat_id,
+          user_id: row.user_id,
+          status: row.status as Member["status"],
+          bubble_color: row.bubble_color as BubbleColor,
+          role: row.role as Member["role"],
+          profile: row.profiles as unknown as Member["profile"],
+        })),
+      );
+    }
+    const { data: msgs } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("chat_id", chatId)
+      .order("created_at", { ascending: true });
+    if (msgs) setMessages(msgs as Message[]);
+  }
+
+  useEffect(() => {
+    loadAll();
+    const ch = supabase
+      .channel(`chat-${chatId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `chat_id=eq.${chatId}` }, (payload) => {
+        if (payload.eventType === "INSERT") {
+          const msg = payload.new as Message;
+          setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+          // Mark delivered if it's incoming
+          if (msg.sender_id !== userId && !msg.delivered_at) {
+            supabase.from("messages").update({ delivered_at: new Date().toISOString() }).eq("id", msg.id);
+          }
+        } else if (payload.eventType === "UPDATE") {
+          const msg = payload.new as Message;
+          setMessages((prev) => prev.map((m) => (m.id === msg.id ? msg : m)));
+        }
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_members", filter: `chat_id=eq.${chatId}` }, () => loadAll())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chats", filter: `id=eq.${chatId}` }, (payload) => setChat(payload.new as Chat))
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId, userId]);
+
+  // Mark delivered on load
+  useEffect(() => {
+    const undelivered = messages.filter((m) => m.sender_id !== userId && !m.delivered_at);
+    if (undelivered.length > 0) {
+      supabase
+        .from("messages")
+        .update({ delivered_at: new Date().toISOString() })
+        .in("id", undelivered.map((m) => m.id));
+    }
+  }, [messages, userId]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages.length]);
+
+  // Resolve custom background URL
+  useEffect(() => {
+    if (!chat) return;
+    if (chat.background_type === "custom") {
+      resolveStorageUrl(chat.background_value, "chat-backgrounds").then(setCustomBgUrl);
+    } else {
+      setCustomBgUrl(null);
+    }
+  }, [chat]);
+
+  async function sendMessage() {
+    const text = input.trim();
+    if (!text || !myMembership || myMembership.status !== "accepted") return;
+    setInput("");
+    const { error } = await supabase.from("messages").insert({
+      chat_id: chatId,
+      sender_id: userId,
+      body: text,
+    });
+    if (error) {
+      toast.error(error.message);
+      setInput(text);
+    }
+  }
+
+  async function setBubbleColor(color: BubbleColor) {
+    const { error } = await supabase
+      .from("chat_members")
+      .update({ bubble_color: color })
+      .eq("chat_id", chatId)
+      .eq("user_id", userId);
+    if (error) toast.error(error.message);
+    else setShowBubble(false);
+  }
+
+  async function setPresetBackground(preset: PresetId) {
+    const { error } = await supabase
+      .from("chats")
+      .update({ background_type: "preset", background_value: preset })
+      .eq("id", chatId);
+    if (error) toast.error(error.message);
+    else setShowBg(false);
+  }
+
+  async function uploadBackground(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const path = `${chatId}/${Date.now()}-${file.name}`;
+    try {
+      await uploadFile("chat-backgrounds", path, file);
+      const { error } = await supabase
+        .from("chats")
+        .update({ background_type: "custom", background_value: path })
+        .eq("id", chatId);
+      if (error) throw error;
+      setShowBg(false);
+      toast.success("Background updated");
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
+
+  async function addMember(username: string): Promise<void> {
+    const p = await findUserByUsername(username);
+    if (!p) { toast.error("No user with that username"); return; }
+    if (members.find((m) => m.user_id === p.id)) { toast.error("Already a member"); return; }
+    const { error } = await supabase.from("chat_members").insert({
+      chat_id: chatId,
+      user_id: p.id,
+      status: "pending",
+      invited_by: userId,
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Invite sent");
+  }
+
+  if (!chat || !myMembership) {
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
+  }
+
+  const bgPresetClass =
+    chat.background_type === "preset"
+      ? CHAT_BACKGROUNDS.find((b) => b.id === chat.background_value)?.className ?? "bg-preset-midnight"
+      : "";
+
+  const title = chat.is_group
+    ? chat.name ?? "Group chat"
+    : others[0]?.profile.display_name ?? "Chat";
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <header className="flex items-center gap-3 px-3 py-2 border-b border-border bg-background sticky top-0 z-10">
+        <button onClick={() => navigate({ to: "/chats" })} className="p-2 rounded-full hover:bg-secondary">
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        {chat.is_group ? (
+          <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Users className="w-5 h-5" /></div>
+        ) : (
+          <Avatar displayName={title} avatarPath={others[0]?.profile.avatar_url} size={40} />
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold truncate">{title}</p>
+          <p className="text-xs text-muted-foreground truncate">
+            {chat.is_group
+              ? `${otherAccepted.length + 1} members${others.some((o) => o.status === "pending") ? " · some pending" : ""}`
+              : others[0]?.status === "pending"
+                ? "Waiting for them to accept…"
+                : `@${others[0]?.profile.username ?? ""}`}
+          </p>
+        </div>
+        <button onClick={() => setShowBubble(true)} className="p-2 rounded-full hover:bg-secondary" aria-label="Bubble color">
+          <Palette className="w-5 h-5" />
+        </button>
+        <button onClick={() => setShowBg(true)} className="p-2 rounded-full hover:bg-secondary" aria-label="Background">
+          <ImageIcon className="w-5 h-5" />
+        </button>
+        {chat.is_group && (
+          <button onClick={() => setShowMembers(true)} className="p-2 rounded-full hover:bg-secondary" aria-label="Members">
+            <Settings className="w-5 h-5" />
+          </button>
+        )}
+      </header>
+
+      <div
+        ref={scrollRef}
+        className={`flex-1 overflow-y-auto px-3 py-4 ${bgPresetClass}`}
+        style={
+          chat.background_type === "custom" && customBgUrl
+            ? { backgroundImage: `url(${customBgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : undefined
+        }
+      >
+        <div className="max-w-2xl mx-auto flex flex-col gap-2">
+          {myMembership.status !== "accepted" && (
+            <div className="bg-card/90 backdrop-blur rounded-2xl p-4 text-center text-sm">
+              You need to accept the invite to see messages.
+            </div>
+          )}
+          {messages.map((m) => {
+            const mine = m.sender_id === userId;
+            const sender = members.find((x) => x.user_id === m.sender_id);
+            const color: BubbleColor = mine ? myMembership.bubble_color : "blue"; // gray for others
+            return (
+              <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                <div className="max-w-[75%] flex flex-col gap-0.5">
+                  {chat.is_group && !mine && sender && (
+                    <span className="text-[11px] text-white/80 px-2">{sender.profile.display_name}</span>
+                  )}
+                  <div
+                    className={`px-4 py-2 rounded-2xl break-words ${
+                      mine
+                        ? bubbleClasses(color)
+                        : "bg-[var(--bubble-gray)] text-[var(--bubble-gray-foreground)]"
+                    }`}
+                  >
+                    {m.body}
+                  </div>
+                  {mine && (
+                    <span className="self-end text-[10px] text-white/70 px-1 flex items-center gap-0.5">
+                      {m.delivered_at ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />}
+                      {m.delivered_at ? "Delivered" : "Sent"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="border-t border-border p-3 bg-background">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendMessage();
+          }}
+          className="max-w-2xl mx-auto flex gap-2 items-end"
+        >
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
+            placeholder={myMembership.status === "accepted" ? "Message…" : "Accept the invite to send messages"}
+            disabled={myMembership.status !== "accepted"}
+            rows={1}
+            className="flex-1 resize-none rounded-2xl bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-ring max-h-32 disabled:opacity-60"
+          />
+          <button
+            type="submit"
+            disabled={!input.trim() || myMembership.status !== "accepted"}
+            className="rounded-full bg-primary text-primary-foreground p-3 disabled:opacity-40"
+            aria-label="Send"
+          >
+            <Send className="w-5 h-5" />
+          </button>
+        </form>
+      </div>
+
+      {showBubble && (
+        <Sheet onClose={() => setShowBubble(false)} title="Your bubble color">
+          <div className="grid grid-cols-4 gap-3 mt-4">
+            {BUBBLE_COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setBubbleColor(c)}
+                className={`aspect-square rounded-2xl ${bubbleClasses(c)} flex items-end p-2 text-xs font-medium capitalize ${myMembership.bubble_color === c ? "ring-2 ring-primary" : ""}`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">Only your sent messages use this color. Each person picks their own.</p>
+        </Sheet>
+      )}
+
+      {showBg && (
+        <Sheet onClose={() => setShowBg(false)} title="Chat background">
+          <div className="grid grid-cols-4 gap-3 mt-4">
+            {CHAT_BACKGROUNDS.map((b) => (
+              <button
+                key={b.id}
+                onClick={() => setPresetBackground(b.id)}
+                className={`aspect-square rounded-2xl ${b.className} flex items-end p-2 text-xs font-medium text-white ${chat.background_type === "preset" && chat.background_value === b.id ? "ring-2 ring-primary" : ""}`}
+              >
+                {b.name}
+              </button>
+            ))}
+          </div>
+          <label className="mt-4 block cursor-pointer rounded-2xl border border-dashed border-border p-4 text-center hover:bg-secondary">
+            <ImageIcon className="w-5 h-5 mx-auto mb-1" />
+            <span className="text-sm">Upload custom background</span>
+            <input type="file" accept="image/*" className="hidden" onChange={uploadBackground} />
+          </label>
+          <p className="mt-2 text-xs text-muted-foreground text-center">Everyone in the chat sees the same background.</p>
+        </Sheet>
+      )}
+
+      {showMembers && (
+        <Sheet onClose={() => setShowMembers(false)} title="Members">
+          <ul className="mt-4 space-y-2">
+            {members.map((m) => (
+              <li key={m.user_id} className="flex items-center gap-3 p-2">
+                <Avatar displayName={m.profile.display_name} avatarPath={m.profile.avatar_url} size={36} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{m.profile.display_name}</p>
+                  <p className="text-xs text-muted-foreground">@{m.profile.username} · {m.status}</p>
+                </div>
+                {m.role === "owner" && <span className="text-[10px] uppercase text-primary">Owner</span>}
+              </li>
+            ))}
+          </ul>
+          <AddMemberInline onAdd={addMember} />
+        </Sheet>
+      )}
+    </div>
+  );
+}
+
+function Sheet({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
+      <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold">{title}</h3>
+          <button onClick={onClose}><X className="w-5 h-5" /></button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function AddMemberInline({ onAdd }: { onAdd: (u: string) => Promise<void> }) {
+  const [u, setU] = useState("");
+  return (
+    <div className="mt-4 flex gap-2">
+      <input
+        className="flex-1 rounded-xl bg-input px-4 py-2 text-sm"
+        placeholder="Add by username"
+        value={u}
+        onChange={(e) => setU(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+      />
+      <button
+        onClick={async () => {
+          await onAdd(u);
+          setU("");
+        }}
+        className="rounded-full bg-primary text-primary-foreground px-4 text-sm font-medium"
+      >
+        Invite
+      </button>
+    </div>
+  );
+}

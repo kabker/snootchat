@@ -1,24 +1,48 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import logo from "@/assets/snoot-logo.png";
+import { supabase } from "@/integrations/supabase/client";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  beforeLoad: async () => {
+    if (typeof window === "undefined") return;
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      // Check onboarding
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", data.session.user.id)
+        .maybeSingle();
+      if (!profile) throw redirect({ to: "/onboarding" });
+      throw redirect({ to: "/chats" });
+    }
+  },
+  component: Landing,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function Landing() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center bg-preset-midnight">
+      <img src={logo} alt="SnootChat" className="w-28 h-28 mb-6" width={512} height={512} />
+      <h1 className="text-5xl font-bold tracking-tight">SnootChat</h1>
+      <p className="mt-3 max-w-md text-muted-foreground">
+        A cozy place to chat. Ask before you message, pick your vibe, and make every thread yours.
+      </p>
+      <div className="mt-8 flex gap-3">
+        <Link
+          to="/auth"
+          className="rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground hover:opacity-90"
+        >
+          Get started
+        </Link>
+        <Link
+          to="/auth"
+          search={{ mode: "signin" }}
+          className="rounded-full border border-border px-6 py-3 font-medium hover:bg-secondary"
+        >
+          Sign in
+        </Link>
+      </div>
     </div>
   );
 }
