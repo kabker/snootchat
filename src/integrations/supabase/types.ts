@@ -14,13 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_members: {
+        Row: {
+          bubble_color: string
+          chat_id: string
+          created_at: string
+          invited_by: string | null
+          role: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          bubble_color?: string
+          chat_id: string
+          created_at?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          bubble_color?: string
+          chat_id?: string
+          created_at?: string
+          invited_by?: string | null
+          role?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_members_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chats: {
+        Row: {
+          background_type: string
+          background_value: string
+          created_at: string
+          created_by: string
+          id: string
+          is_group: boolean
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          background_type?: string
+          background_value?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_group?: boolean
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          background_type?: string
+          background_value?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_group?: boolean
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          body: string
+          chat_id: string
+          created_at: string
+          delivered_at: string | null
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          chat_id: string
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          chat_id?: string
+          created_at?: string
+          delivered_at?: string | null
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string
+          id: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name: string
+          id: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_chat_accepted: {
+        Args: { _chat: string; _user: string }
+        Returns: boolean
+      }
+      is_chat_member: {
+        Args: { _chat: string; _user: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
