@@ -188,17 +188,17 @@ function ChatThread() {
     }
   }
 
-  async function addMember(username: string) {
+  async function addMember(username: string): Promise<void> {
     const p = await findUserByUsername(username);
-    if (!p) return toast.error("No user with that username");
-    if (members.find((m) => m.user_id === p.id)) return toast.error("Already a member");
+    if (!p) { toast.error("No user with that username"); return; }
+    if (members.find((m) => m.user_id === p.id)) { toast.error("Already a member"); return; }
     const { error } = await supabase.from("chat_members").insert({
       chat_id: chatId,
       user_id: p.id,
       status: "pending",
       invited_by: userId,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Invite sent");
   }
 
