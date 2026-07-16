@@ -48,7 +48,7 @@ function VerifyPage() {
       const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: code.trim(),
-        type: "email",
+        type: "signup",
       });
       if (error) return toast.error(error.message);
       if (!data.user) return toast.error("Verification failed");
