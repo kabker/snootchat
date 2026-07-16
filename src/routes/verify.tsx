@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import logo from "@/assets/snoot-logo.png";
@@ -11,6 +11,25 @@ export const Route = createFileRoute("/verify")({
   validateSearch: (s) => searchSchema.parse(s),
   component: VerifyPage,
 });
+
+async function ensureProfileFor(userId: string) {
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
+  if (existing) return;
+  const raw = sessionStorage.getItem("snoot:pending-profile");
+  if (!raw) return;
+  const p = JSON.parse(raw) as { username: string; display_name: string };
+  const { error } = await supabase.from("profiles").insert({
+    id: userId,
+    username: p.username,
+    display_name: p.display_name,
+  });
+  if (error && !error.message.includes("duplicate")) throw error;
+  sessionStorage.removeItem("snoot:pending-profile");
+}
 
 function VerifyPage() {
   const { email: qEmail } = Route.useSearch();

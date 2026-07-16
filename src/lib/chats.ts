@@ -68,56 +68,17 @@ export async function findUserByUsername(username: string) {
   return data;
 }
 
-export async function createDMChat(currentUserId: string, otherUserId: string): Promise<string> {
-  // Try to find existing 1:1 chat between the two
-  const { data: mine } = await supabase
-    .from("chat_members")
-    .select("chat_id, chats!inner(is_group)")
-    .eq("user_id", currentUserId);
-  const dmIds = (mine ?? [])
-    .filter((r) => !(r.chats as unknown as { is_group: boolean }).is_group)
-    .map((r) => r.chat_id);
-  if (dmIds.length > 0) {
-    const { data: matches } = await supabase
-      .from("chat_members")
-      .select("chat_id")
-      .eq("user_id", otherUserId)
-      .in("chat_id", dmIds);
-    if (matches && matches.length > 0) return matches[0].chat_id;
-  }
-
-  const { data: chat, error } = await supabase
-    .from("chats")
-    .insert({ is_group: false, created_by: currentUserId })
-    .select("id")
-    .single();
+export async function createDMChat(_currentUserId: string, otherUserId: string): Promise<string> {
+  const { data, error } = await supabase.rpc("create_dm_chat", { other_user_id: otherUserId });
   if (error) throw error;
-
-  const { error: mErr } = await supabase.from("chat_members").insert([
-    { chat_id: chat.id, user_id: currentUserId, status: "accepted", role: "owner" },
-    { chat_id: chat.id, user_id: otherUserId, status: "pending", invited_by: currentUserId },
-  ]);
-  if (mErr) throw mErr;
-  return chat.id;
+  return data as string;
 }
 
-export async function createGroupChat(currentUserId: string, name: string, memberIds: string[]): Promise<string> {
-  const { data: chat, error } = await supabase
-    .from("chats")
-    .insert({ is_group: true, name, created_by: currentUserId })
-    .select("id")
-    .single();
+export async function createGroupChat(_currentUserId: string, name: string, memberIds: string[]): Promise<string> {
+  const { data, error } = await supabase.rpc("create_group_chat", {
+    group_name: name,
+    member_ids: memberIds,
+  });
   if (error) throw error;
-  const rows = [
-    { chat_id: chat.id, user_id: currentUserId, status: "accepted" as const, role: "owner" as const },
-    ...memberIds.map((uid) => ({
-      chat_id: chat.id,
-      user_id: uid,
-      status: "pending" as const,
-      invited_by: currentUserId,
-    })),
-  ];
-  const { error: mErr } = await supabase.from("chat_members").insert(rows);
-  if (mErr) throw mErr;
-  return chat.id;
+  return data as string;
 }
