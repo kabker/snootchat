@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchMyChats, findUserByUsername, createDMChat, createGroupChat, type ChatSummary } from "@/lib/chats";
 import { Avatar } from "@/components/Avatar";
 import logo from "@/assets/snoot-logo.png";
-import { LogOut, Plus, Users, X } from "lucide-react";
+import { Settings as SettingsIcon, Plus, Users, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/chats")({
   component: ChatsList,
@@ -66,11 +66,6 @@ function ChatsList() {
     load();
   }
 
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  }
-
   return (
     <div className="min-h-screen max-w-2xl mx-auto px-4 pb-24">
       <header className="flex items-center justify-between py-4 sticky top-0 bg-background z-10 border-b border-border">
@@ -89,13 +84,13 @@ function ChatsList() {
           >
             <Plus className="w-5 h-5" />
           </button>
-          <button
-            onClick={handleSignOut}
+          <Link
+            to="/settings"
             className="rounded-full border border-border p-2 hover:bg-secondary"
-            aria-label="Sign out"
+            aria-label="Settings"
           >
-            <LogOut className="w-5 h-5" />
-          </button>
+            <SettingsIcon className="w-5 h-5" />
+          </Link>
         </div>
       </header>
 
