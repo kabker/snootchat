@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import logo from "@/assets/snoot-logo.png";
@@ -12,6 +12,25 @@ export const Route = createFileRoute("/verify")({
   component: VerifyPage,
 });
 
+async function ensureProfileFor(userId: string) {
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
+  if (existing) return;
+  const raw = sessionStorage.getItem("snoot:pending-profile");
+  if (!raw) return;
+  const p = JSON.parse(raw) as { username: string; display_name: string };
+  const { error } = await supabase.from("profiles").insert({
+    id: userId,
+    username: p.username,
+    display_name: p.display_name,
+  });
+  if (error && !error.message.includes("duplicate")) throw error;
+  sessionStorage.removeItem("snoot:pending-profile");
+}
+
 function VerifyPage() {
   const { email: qEmail } = Route.useSearch();
   const navigate = useNavigate();
@@ -20,24 +39,36 @@ function VerifyPage() {
   const [busy, setBusy] = useState(false);
   const [resending, setResending] = useState(false);
 
-  async function ensureProfile(userId: string) {
-    const { data: existing } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", userId)
-      .maybeSingle();
-    if (existing) return;
-    const raw = sessionStorage.getItem("snoot:pending-profile");
-    if (!raw) return;
-    const p = JSON.parse(raw) as { username: string; display_name: string };
-    const { error } = await supabase.from("profiles").insert({
-      id: userId,
-      username: p.username,
-      display_name: p.display_name,
+  // If the user clicked the confirmation link in their email, they arrive here
+  // (or on the root) with an active session — finish profile setup and continue.
+  useEffect(() => {
+    let cancelled = false;
+    async function handleSession(userId: string) {
+      try {
+        await ensureProfileFor(userId);
+      } catch (err) {
+        toast.error((err as Error).message);
+        return;
+      }
+      if (cancelled) return;
+      toast.success("Email verified!");
+      navigate({ to: "/chats" });
+    }
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) handleSession(data.session.user.id);
     });
-    if (error && !error.message.includes("duplicate")) throw error;
-    sessionStorage.removeItem("snoot:pending-profile");
-  }
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session?.user) {
+        handleSession(session.user.id);
+      }
+    });
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
@@ -53,7 +84,7 @@ function VerifyPage() {
       if (error) return toast.error(error.message);
       if (!data.user) return toast.error("Verification failed");
       try {
-        await ensureProfile(data.user.id);
+        await ensureProfileFor(data.user.id);
       } catch (err) {
         toast.error((err as Error).message);
         return;
@@ -85,11 +116,11 @@ function VerifyPage() {
       >
         <div className="flex flex-col items-center mb-6">
           <img src={logo} alt="" className="w-16 h-16" width={512} height={512} />
-          <h1 className="mt-2 text-2xl font-bold">Enter your code</h1>
+          <h1 className="mt-2 text-2xl font-bold">Verify your email</h1>
           <p className="mt-1 text-sm text-muted-foreground text-center">
-            We emailed a verification code to{" "}
-            <span className="text-foreground font-medium">{email || "your inbox"}</span>. It might be
-            in your spam folder.
+            We sent a message to{" "}
+            <span className="text-foreground font-medium">{email || "your inbox"}</span>. Click the
+            confirmation link, or enter the code below. It might be in your spam folder.
           </p>
         </div>
 
