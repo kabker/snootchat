@@ -35,7 +35,6 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      // Session set — go to onboarding check
       navigate({ to: "/" });
     } finally {
       setLoading(false);
@@ -51,7 +50,6 @@ function AuthPage() {
         if (displayName.length < 1) return toast.error("Display name is required");
         if (password.length < 6) return toast.error("Password must be at least 6 characters");
 
-        // Check username uniqueness first (best-effort; DB will enforce)
         const { data: existing } = await supabase
           .from("profiles")
           .select("id")
@@ -59,7 +57,7 @@ function AuthPage() {
           .maybeSingle();
         if (existing) return toast.error("Username is taken");
 
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -68,20 +66,24 @@ function AuthPage() {
           },
         });
         if (error) return toast.error(error.message);
-        if (!data.user) return toast.error("Sign up failed");
 
-        // Create profile now that we have a session
-        const { error: pErr } = await supabase.from("profiles").insert({
-          id: data.user.id,
-          username,
-          display_name: displayName,
-        });
-        if (pErr) return toast.error(pErr.message);
-        toast.success("Welcome to SnootChat!");
-        navigate({ to: "/chats" });
+        // Stash pending profile details so /verify can create the profile once the session exists.
+        sessionStorage.setItem(
+          "snoot:pending-profile",
+          JSON.stringify({ email, username, display_name: displayName }),
+        );
+        toast.success("Check your email for a verification code");
+        navigate({ to: "/verify", search: { email } });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return toast.error(error.message);
+        if (error) {
+          if (error.message.toLowerCase().includes("confirm")) {
+            toast.error("Please verify your email first");
+            navigate({ to: "/verify", search: { email } });
+            return;
+          }
+          return toast.error(error.message);
+        }
         navigate({ to: "/" });
       }
     } finally {
