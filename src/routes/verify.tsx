@@ -116,11 +116,11 @@ function VerifyPage() {
       >
         <div className="flex flex-col items-center mb-6">
           <img src={logo} alt="" className="w-16 h-16" width={512} height={512} />
-          <h1 className="mt-2 text-2xl font-bold">Enter your code</h1>
+          <h1 className="mt-2 text-2xl font-bold">Verify your email</h1>
           <p className="mt-1 text-sm text-muted-foreground text-center">
-            We emailed a verification code to{" "}
-            <span className="text-foreground font-medium">{email || "your inbox"}</span>. It might be
-            in your spam folder.
+            We sent a message to{" "}
+            <span className="text-foreground font-medium">{email || "your inbox"}</span>. Click the
+            confirmation link, or enter the code below. It might be in your spam folder.
           </p>
         </div>
 
