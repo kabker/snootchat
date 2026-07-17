@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedChatsRouteImport } from './routes/_authenticated/chats'
 import { Route as AuthenticatedChatsIndexRouteImport } from './routes/_authenticated/chats.index'
 import { Route as AuthenticatedChatsChatIdRouteImport } from './routes/_authenticated/chats.$chatId'
 
@@ -47,16 +48,21 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedChatsIndexRoute = AuthenticatedChatsIndexRouteImport.update({
-  id: '/chats/',
-  path: '/chats/',
+const AuthenticatedChatsRoute = AuthenticatedChatsRouteImport.update({
+  id: '/chats',
+  path: '/chats',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChatsIndexRoute = AuthenticatedChatsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedChatsRoute,
 } as any)
 const AuthenticatedChatsChatIdRoute =
   AuthenticatedChatsChatIdRouteImport.update({
-    id: '/chats/$chatId',
-    path: '/chats/$chatId',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/$chatId',
+    path: '/$chatId',
+    getParentRoute: () => AuthenticatedChatsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
   '/verify': typeof VerifyRoute
+  '/chats': typeof AuthenticatedChatsRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRoute
   '/chats/$chatId': typeof AuthenticatedChatsChatIdRoute
   '/chats/': typeof AuthenticatedChatsIndexRoute
@@ -84,6 +91,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
   '/verify': typeof VerifyRoute
+  '/_authenticated/chats': typeof AuthenticatedChatsRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/chats/$chatId': typeof AuthenticatedChatsChatIdRoute
   '/_authenticated/chats/': typeof AuthenticatedChatsIndexRoute
@@ -95,6 +103,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/verify'
+    | '/chats'
     | '/settings'
     | '/chats/$chatId'
     | '/chats/'
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/verify'
+    | '/_authenticated/chats'
     | '/_authenticated/settings'
     | '/_authenticated/chats/$chatId'
     | '/_authenticated/chats/'
@@ -171,33 +181,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/chats': {
+      id: '/_authenticated/chats'
+      path: '/chats'
+      fullPath: '/chats'
+      preLoaderRoute: typeof AuthenticatedChatsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chats/': {
       id: '/_authenticated/chats/'
-      path: '/chats'
+      path: '/'
       fullPath: '/chats/'
       preLoaderRoute: typeof AuthenticatedChatsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedChatsRoute
     }
     '/_authenticated/chats/$chatId': {
       id: '/_authenticated/chats/$chatId'
-      path: '/chats/$chatId'
+      path: '/$chatId'
       fullPath: '/chats/$chatId'
       preLoaderRoute: typeof AuthenticatedChatsChatIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedChatsRoute
     }
   }
 }
 
-interface AuthenticatedRouteRouteChildren {
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+interface AuthenticatedChatsRouteChildren {
   AuthenticatedChatsChatIdRoute: typeof AuthenticatedChatsChatIdRoute
   AuthenticatedChatsIndexRoute: typeof AuthenticatedChatsIndexRoute
 }
 
-const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+const AuthenticatedChatsRouteChildren: AuthenticatedChatsRouteChildren = {
   AuthenticatedChatsChatIdRoute: AuthenticatedChatsChatIdRoute,
   AuthenticatedChatsIndexRoute: AuthenticatedChatsIndexRoute,
+}
+
+const AuthenticatedChatsRouteWithChildren =
+  AuthenticatedChatsRoute._addFileChildren(AuthenticatedChatsRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedChatsRoute: typeof AuthenticatedChatsRouteWithChildren
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedChatsRoute: AuthenticatedChatsRouteWithChildren,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
