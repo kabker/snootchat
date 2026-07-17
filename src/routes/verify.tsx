@@ -35,8 +35,6 @@ function VerifyPage() {
   const { email: qEmail } = Route.useSearch();
   const navigate = useNavigate();
   const [email, setEmail] = useState(qEmail ?? "");
-  const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
   const [resending, setResending] = useState(false);
 
   // If the user clicked the confirmation link in their email, they arrive here
@@ -70,39 +68,13 @@ function VerifyPage() {
   }, []);
 
 
-  async function handleVerify(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email) return toast.error("Enter your email");
-    if (code.length < 4) return toast.error("Enter the code from your email");
-    setBusy(true);
-    try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token: code.trim(),
-        type: "signup",
-      });
-      if (error) return toast.error(error.message);
-      if (!data.user) return toast.error("Verification failed");
-      try {
-        await ensureProfileFor(data.user.id);
-      } catch (err) {
-        toast.error((err as Error).message);
-        return;
-      }
-      toast.success("Verified!");
-      navigate({ to: "/chats" });
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function handleResend() {
     if (!email) return toast.error("Enter your email");
     setResending(true);
     try {
       const { error } = await supabase.auth.resend({ type: "signup", email });
       if (error) return toast.error(error.message);
-      toast.success("New code sent");
+      toast.success("Verification email sent");
     } finally {
       setResending(false);
     }
@@ -110,57 +82,39 @@ function VerifyPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-preset-midnight px-4">
-      <form
-        onSubmit={handleVerify}
-        className="w-full max-w-md bg-card rounded-3xl border border-border p-8 shadow-2xl"
-      >
+      <div className="w-full max-w-md bg-card rounded-3xl border border-border p-8 shadow-2xl text-center">
         <div className="flex flex-col items-center mb-6">
           <img src={logo} alt="" className="w-16 h-16" width={512} height={512} />
-          <h1 className="mt-2 text-2xl font-bold">Verify your email</h1>
-          <p className="mt-1 text-sm text-muted-foreground text-center">
-            We sent a message to{" "}
-            <span className="text-foreground font-medium">{email || "your inbox"}</span>. Click the
-            confirmation link, or enter the code below. It might be in your spam folder.
+          <h1 className="mt-3 text-2xl font-bold">Check your email</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            We sent a verification link to{" "}
+            <span className="text-foreground font-medium">{email || "your inbox"}</span>. Click it
+            to verify your email — it might be in your <span className="text-foreground">spam folder</span>.
           </p>
         </div>
 
         {!qEmail && (
           <input
             type="email"
-            className="w-full rounded-xl bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-ring mb-3"
+            className="w-full rounded-xl bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-ring mb-3 text-left"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
           />
         )}
 
-        <input
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          className="w-full rounded-xl bg-input px-4 py-4 text-center text-2xl tracking-[0.5em] font-mono outline-none focus:ring-2 focus:ring-ring"
-          placeholder="••••••"
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
-          required
-        />
+        <p className="text-xs text-muted-foreground">
+          Once you click the link in the email, this page will continue automatically.
+        </p>
 
-        <button
-          type="submit"
-          disabled={busy}
-          className="mt-5 w-full rounded-full bg-primary text-primary-foreground py-3 font-semibold hover:opacity-90 disabled:opacity-60"
-        >
-          {busy ? "Verifying…" : "Verify"}
-        </button>
-
-        <div className="mt-4 flex items-center justify-between text-sm">
+        <div className="mt-6 flex items-center justify-between text-sm">
           <button
             type="button"
             onClick={handleResend}
             disabled={resending}
             className="text-primary font-medium disabled:opacity-60"
           >
-            {resending ? "Sending…" : "Resend code"}
+            {resending ? "Sending…" : "Resend email"}
           </button>
           <button
             type="button"
@@ -170,7 +124,8 @@ function VerifyPage() {
             Back to sign in
           </button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }
+
