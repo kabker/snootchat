@@ -20,10 +20,10 @@ export async function fetchMyChats(userId: string): Promise<ChatSummary[]> {
 
   const chatIds = memberships.map((m) => m.chat_id);
 
-  const [{ data: allMembers }, { data: lastMessages }] = await Promise.all([
+  const [{ data: allMembers, error: membersError }, { data: lastMessages, error: messagesError }] = await Promise.all([
     supabase
       .from("chat_members")
-      .select("chat_id, user_id, profiles!inner(id, username, display_name, avatar_url)")
+      .select("chat_id, user_id")
       .in("chat_id", chatIds),
     supabase
       .from("messages")
@@ -31,6 +31,19 @@ export async function fetchMyChats(userId: string): Promise<ChatSummary[]> {
       .in("chat_id", chatIds)
       .order("created_at", { ascending: false }),
   ]);
+  if (membersError) throw membersError;
+  if (messagesError) throw messagesError;
+
+  const profileIds = Array.from(new Set((allMembers ?? []).map((m) => m.user_id)));
+  const { data: profiles, error: profilesError } = profileIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id, username, display_name, avatar_url")
+        .in("id", profileIds)
+    : { data: [], error: null };
+  if (profilesError) throw profilesError;
+
+  const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
 
   const lastByChat = new Map<string, { body: string; created_at: string; sender_id: string }>();
   (lastMessages ?? []).forEach((m) => {
@@ -43,8 +56,13 @@ export async function fetchMyChats(userId: string): Promise<ChatSummary[]> {
       const others = (allMembers ?? [])
         .filter((am) => am.chat_id === m.chat_id && am.user_id !== userId)
         .map((am) => {
-          const p = am.profiles as unknown as { id: string; username: string; display_name: string; avatar_url: string | null };
-          return p;
+          const p = profileById.get(am.user_id);
+          return {
+            id: am.user_id,
+            username: p?.username ?? "unknown",
+            display_name: p?.display_name ?? "Snoot user",
+            avatar_url: p?.avatar_url ?? null,
+          };
         });
       return {
         chat_id: m.chat_id,
