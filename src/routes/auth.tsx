@@ -72,7 +72,7 @@ function AuthPage() {
           "snoot:pending-profile",
           JSON.stringify({ email, username, display_name: displayName }),
         );
-        toast.success("Check your email for a verification code");
+        toast.success("Check your email to verify your account");
         navigate({ to: "/verify", search: { email } });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
