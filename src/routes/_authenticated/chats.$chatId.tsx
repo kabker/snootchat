@@ -45,6 +45,8 @@ function ChatThread() {
   const [chat, setChat] = useState<Chat | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [showBg, setShowBg] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
@@ -56,37 +58,75 @@ function ChatThread() {
   const others = members.filter((m) => m.user_id !== userId);
   const otherAccepted = others.filter((m) => m.status === "accepted");
 
-  async function loadAll() {
-    const [{ data: c }, { data: m }] = await Promise.all([
+  async function loadAll(showSpinner = false) {
+    if (showSpinner) setLoading(true);
+    setLoadError(null);
+    try {
+      const [{ data: c, error: chatError }, { data: memberRows, error: membersError }] = await Promise.all([
       supabase.from("chats").select("*").eq("id", chatId).single(),
       supabase
         .from("chat_members")
-        .select("chat_id, user_id, status, bubble_color, role, profiles!inner(id, username, display_name, avatar_url)")
+        .select("chat_id, user_id, status, bubble_color, role")
         .eq("chat_id", chatId),
-    ]);
-    if (c) setChat(c as Chat);
-    if (m) {
+      ]);
+      if (chatError) throw chatError;
+      if (membersError) throw membersError;
+      if (!c) throw new Error("Chat not found");
+
+      const profileIds = Array.from(new Set((memberRows ?? []).map((row) => row.user_id)));
+      const { data: profiles, error: profilesError } = profileIds.length
+        ? await supabase
+            .from("profiles")
+            .select("id, username, display_name, avatar_url")
+            .in("id", profileIds)
+        : { data: [], error: null };
+      if (profilesError) throw profilesError;
+
+      const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
       setMembers(
-        m.map((row) => ({
+        (memberRows ?? []).map((row) => {
+          const profile = profileById.get(row.user_id);
+          return {
           chat_id: row.chat_id,
           user_id: row.user_id,
           status: row.status as Member["status"],
           bubble_color: row.bubble_color as BubbleColor,
           role: row.role as Member["role"],
-          profile: row.profiles as unknown as Member["profile"],
-        })),
+            profile: {
+              id: row.user_id,
+              username: profile?.username ?? "unknown",
+              display_name: profile?.display_name ?? "Snoot user",
+              avatar_url: profile?.avatar_url ?? null,
+            },
+          };
+        }),
       );
+      setChat(c as Chat);
+
+      const currentMember = (memberRows ?? []).find((row) => row.user_id === userId);
+      if (currentMember?.status === "accepted") {
+        const { data: msgs, error: messagesError } = await supabase
+          .from("messages")
+          .select("*")
+          .eq("chat_id", chatId)
+          .order("created_at", { ascending: true });
+        if (messagesError) throw messagesError;
+        setMessages((msgs ?? []) as Message[]);
+      } else {
+        setMessages([]);
+      }
+    } catch (error) {
+      setLoadError((error as Error).message);
+    } finally {
+      setLoading(false);
     }
-    const { data: msgs } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("chat_id", chatId)
-      .order("created_at", { ascending: true });
-    if (msgs) setMessages(msgs as Message[]);
   }
 
   useEffect(() => {
-    loadAll();
+    setChat(null);
+    setMembers([]);
+    setMessages([]);
+    loadAll(true);
     const ch = supabase
       .channel(`chat-${chatId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `chat_id=eq.${chatId}` }, (payload) => {
@@ -202,8 +242,25 @@ function ChatThread() {
     toast.success("Invite sent");
   }
 
-  if (!chat || !myMembership) {
+  if (loading) {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
+  }
+
+  if (loadError || !chat || !myMembership) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-muted-foreground">Unable to open this chat.</p>
+        {loadError && <p className="max-w-md text-sm text-muted-foreground">{loadError}</p>}
+        <div className="flex gap-2">
+          <button onClick={() => navigate({ to: "/chats" })} className="rounded-full bg-secondary px-4 py-2 text-sm font-medium">
+            Back to chats
+          </button>
+          <button onClick={() => loadAll(true)} className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-medium">
+            Try again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const bgPresetClass =
