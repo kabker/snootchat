@@ -7,7 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import logo from "@/assets/snoot-logo.png";
 import { Settings as SettingsIcon, Plus, Users, X } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/chats")({
+export const Route = createFileRoute("/_authenticated/chats/")({
   component: ChatsList,
 });
 
