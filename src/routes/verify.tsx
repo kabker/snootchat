@@ -111,7 +111,7 @@ function VerifyPage() {
           <button
             type="button"
             onClick={handleResend}
-            disabled={resending || busy}
+            disabled={resending}
             className="text-primary font-medium disabled:opacity-60"
           >
             {resending ? "Sending…" : "Resend email"}
