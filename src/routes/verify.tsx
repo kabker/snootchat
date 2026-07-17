@@ -35,8 +35,6 @@ function VerifyPage() {
   const { email: qEmail } = Route.useSearch();
   const navigate = useNavigate();
   const [email, setEmail] = useState(qEmail ?? "");
-  const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
   const [resending, setResending] = useState(false);
 
   // If the user clicked the confirmation link in their email, they arrive here
