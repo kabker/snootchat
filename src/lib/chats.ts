@@ -78,12 +78,10 @@ export async function fetchMyChats(userId: string): Promise<ChatSummary[]> {
 }
 
 export async function findUserByUsername(username: string) {
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, username, display_name, avatar_url")
-    .eq("username", username.toLowerCase())
-    .maybeSingle();
-  return data;
+  const { data } = await supabase.rpc("find_profile_by_username", {
+    _username: username.toLowerCase(),
+  });
+  return (data ?? [])[0] ?? null;
 }
 
 export async function createDMChat(_currentUserId: string, otherUserId: string): Promise<string> {
