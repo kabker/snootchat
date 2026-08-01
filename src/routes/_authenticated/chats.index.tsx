@@ -47,11 +47,10 @@ function ChatsList() {
   const pending = chats.filter((c) => c.status === "pending");
 
   async function handleAccept(chatId: string) {
-    const { error } = await supabase
-      .from("chat_members")
-      .update({ status: "accepted" })
-      .eq("chat_id", chatId)
-      .eq("user_id", userId);
+    const { error } = await supabase.rpc("respond_to_invite", {
+      target_chat_id: chatId,
+      new_status: "accepted",
+    });
     if (error) return toast.error(error.message);
     toast.success("Request accepted");
     load();

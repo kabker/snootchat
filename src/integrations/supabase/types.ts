@@ -154,6 +154,20 @@ export type Database = {
         Args: { group_name: string; member_ids: string[] }
         Returns: string
       }
+      find_profile_by_username: {
+        Args: { _username: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          username: string
+        }[]
+      }
+      respond_to_invite: {
+        Args: { new_status: string; target_chat_id: string }
+        Returns: undefined
+      }
+      username_available: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

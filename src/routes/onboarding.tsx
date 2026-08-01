@@ -57,12 +57,10 @@ function Onboarding() {
     if (!displayName.trim()) return toast.error("Display name is required");
     setSaving(true);
     try {
-      const { data: existing } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", username)
-        .maybeSingle();
-      if (existing) {
+      const { data: available } = await supabase.rpc("username_available", {
+        _username: username,
+      });
+      if (!available) {
         toast.error("Username is taken");
         return;
       }
