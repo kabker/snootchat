@@ -98,3 +98,24 @@ export async function createGroupChat(_currentUserId: string, name: string, memb
   if (error) throw error;
   return data as string;
 }
+
+export type ProfileLite = {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+};
+
+export async function searchProfiles(query: string): Promise<ProfileLite[]> {
+  const { data, error } = await supabase.rpc("search_profiles", { _q: query });
+  if (error) throw error;
+  return (data ?? []) as ProfileLite[];
+}
+
+export async function getProfileByUsername(username: string): Promise<ProfileLite | null> {
+  const { data, error } = await supabase.rpc("find_profile_by_username", {
+    _username: username.toLowerCase(),
+  });
+  if (error) throw error;
+  return ((data ?? [])[0] as ProfileLite) ?? null;
+}
