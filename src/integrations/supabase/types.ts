@@ -167,6 +167,15 @@ export type Database = {
         Args: { new_status: string; target_chat_id: string }
         Returns: undefined
       }
+      search_profiles: {
+        Args: { _q: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          id: string
+          username: string
+        }[]
+      }
       username_available: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {
