@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchMyChats, findUserByUsername, createDMChat, createGroupChat, type ChatSummary } from "@/lib/chats";
+import { fetchMyChats, createDMChat, createGroupChat, type ChatSummary, type ProfileLite } from "@/lib/chats";
+import { UserSearch } from "@/components/UserSearch";
 import { Avatar } from "@/components/Avatar";
 import logo from "@/assets/snoot-logo.png";
 import { Settings as SettingsIcon, Plus, Users, X } from "lucide-react";
@@ -201,36 +202,27 @@ function EmptyState({ onNew }: { onNew: () => void }) {
 
 function NewChatModal({ userId, onClose, onCreated }: { userId: string; onClose: () => void; onCreated: (id: string) => void }) {
   const [mode, setMode] = useState<"dm" | "group">("dm");
-  const [username, setUsername] = useState("");
   const [groupName, setGroupName] = useState("");
-  const [members, setMembers] = useState<{ id: string; display_name: string; username: string }[]>([]);
+  const [selected, setSelected] = useState<ProfileLite[]>([]);
   const [busy, setBusy] = useState(false);
 
-  async function addMember() {
-    if (!username) return;
-    const p = await findUserByUsername(username);
-    if (!p) return toast.error("No user with that username");
-    if (p.id === userId) return toast.error("That's you!");
-    if (members.find((m) => m.id === p.id)) return toast.error("Already added");
-    setMembers([...members, { id: p.id, display_name: p.display_name, username: p.username }]);
-    setUsername("");
+  function pick(p: ProfileLite) {
+    if (mode === "dm") setSelected([p]);
+    else if (!selected.find((m) => m.id === p.id)) setSelected([...selected, p]);
   }
 
   async function submit() {
     setBusy(true);
     try {
       if (mode === "dm") {
-        if (!username) return toast.error("Enter a username");
-        const p = await findUserByUsername(username);
-        if (!p) return toast.error("No user with that username");
-        if (p.id === userId) return toast.error("That's you!");
-        const id = await createDMChat(userId, p.id);
+        if (selected.length === 0) return toast.error("Pick someone to chat with");
+        const id = await createDMChat(userId, selected[0].id);
         toast.success("Request sent");
         onCreated(id);
       } else {
         if (!groupName.trim()) return toast.error("Group name required");
-        if (members.length === 0) return toast.error("Add at least one member");
-        const id = await createGroupChat(userId, groupName.trim(), members.map((m) => m.id));
+        if (selected.length === 0) return toast.error("Add at least one member");
+        const id = await createGroupChat(userId, groupName.trim(), selected.map((m) => m.id));
         toast.success("Group created — invites sent");
         onCreated(id);
       }
@@ -249,8 +241,8 @@ function NewChatModal({ userId, onClose, onCreated }: { userId: string; onClose:
           <button onClick={onClose}><X className="w-5 h-5" /></button>
         </div>
         <div className="flex gap-2 mb-4">
-          <button onClick={() => setMode("dm")} className={`flex-1 py-2 rounded-full text-sm font-medium ${mode === "dm" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>Direct</button>
-          <button onClick={() => setMode("group")} className={`flex-1 py-2 rounded-full text-sm font-medium ${mode === "group" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>Group</button>
+          <button onClick={() => { setMode("dm"); setSelected([]); }} className={`flex-1 py-2 rounded-full text-sm font-medium ${mode === "dm" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>Direct</button>
+          <button onClick={() => { setMode("group"); setSelected([]); }} className={`flex-1 py-2 rounded-full text-sm font-medium ${mode === "group" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>Group</button>
         </div>
         {mode === "group" && (
           <input
@@ -260,23 +252,20 @@ function NewChatModal({ userId, onClose, onCreated }: { userId: string; onClose:
             onChange={(e) => setGroupName(e.target.value)}
           />
         )}
-        <div className="flex gap-2">
-          <input
-            className="flex-1 rounded-xl bg-input px-4 py-3"
-            placeholder="Add by username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-          />
-          {mode === "group" && (
-            <button onClick={addMember} className="rounded-full bg-secondary px-4 font-medium">Add</button>
-          )}
-        </div>
-        {mode === "group" && members.length > 0 && (
+        <UserSearch
+          placeholder="Search people by username"
+          excludeIds={selected.map((s) => s.id)}
+          onSelect={pick}
+        />
+        {selected.length > 0 && (
           <ul className="mt-3 flex flex-wrap gap-2">
-            {members.map((m) => (
-              <li key={m.id} className="flex items-center gap-2 bg-secondary rounded-full px-3 py-1 text-sm">
-                {m.display_name}
-                <button onClick={() => setMembers(members.filter((x) => x.id !== m.id))}><X className="w-3 h-3" /></button>
+            {selected.map((m) => (
+              <li key={m.id} className="flex items-center gap-2 bg-secondary rounded-full pl-1 pr-3 py-1 text-sm">
+                <Avatar displayName={m.display_name} avatarPath={m.avatar_url} size={22} />
+                <span>@{m.username}</span>
+                <button onClick={() => setSelected(selected.filter((x) => x.id !== m.id))} aria-label="Remove">
+                  <X className="w-3 h-3" />
+                </button>
               </li>
             ))}
           </ul>
@@ -291,9 +280,6 @@ function NewChatModal({ userId, onClose, onCreated }: { userId: string; onClose:
         <p className="mt-3 text-xs text-muted-foreground text-center">
           {mode === "dm" ? "They'll need to accept before you can chat." : "Members must accept the invite to see messages."}
         </p>
-        <div className="mt-4 text-center">
-          <Link to="/chats" className="text-xs text-muted-foreground">Cancel</Link>
-        </div>
       </div>
     </div>
   );
