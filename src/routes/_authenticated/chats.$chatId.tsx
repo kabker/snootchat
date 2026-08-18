@@ -6,7 +6,8 @@ import { Avatar } from "@/components/Avatar";
 import { bubbleClasses, BUBBLE_COLORS, CHAT_BACKGROUNDS, type BubbleColor, type PresetId } from "@/lib/chat-presets";
 import { resolveStorageUrl, uploadFile } from "@/lib/storage";
 import { ArrowLeft, Check, CheckCheck, Image as ImageIcon, Palette, Send, Settings, Users, X } from "lucide-react";
-import { findUserByUsername } from "@/lib/chats";
+import type { ProfileLite } from "@/lib/chats";
+import { UserSearch } from "@/components/UserSearch";
 
 export const Route = createFileRoute("/_authenticated/chats/$chatId")({
   component: ChatThread,
@@ -228,9 +229,7 @@ function ChatThread() {
     }
   }
 
-  async function addMember(username: string): Promise<void> {
-    const p = await findUserByUsername(username);
-    if (!p) { toast.error("No user with that username"); return; }
+  async function addMember(p: ProfileLite): Promise<void> {
     if (members.find((m) => m.user_id === p.id)) { toast.error("Already a member"); return; }
     const { error } = await supabase.from("chat_members").insert({
       chat_id: chatId,
@@ -280,8 +279,12 @@ function ChatThread() {
         </button>
         {chat.is_group ? (
           <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Users className="w-5 h-5" /></div>
+        ) : others[0] ? (
+          <Link to="/u/$username" params={{ username: others[0].profile.username }}>
+            <Avatar displayName={title} avatarPath={others[0].profile.avatar_url} size={40} />
+          </Link>
         ) : (
-          <Avatar displayName={title} avatarPath={others[0]?.profile.avatar_url} size={40} />
+          <Avatar displayName={title} size={40} />
         )}
         <div className="flex-1 min-w-0">
           <p className="font-semibold truncate">{title}</p>
@@ -430,16 +433,28 @@ function ChatThread() {
           <ul className="mt-4 space-y-2">
             {members.map((m) => (
               <li key={m.user_id} className="flex items-center gap-3 p-2">
-                <Avatar displayName={m.profile.display_name} avatarPath={m.profile.avatar_url} size={36} />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{m.profile.display_name}</p>
-                  <p className="text-xs text-muted-foreground">@{m.profile.username} · {m.status}</p>
-                </div>
+                <Link
+                  to="/u/$username"
+                  params={{ username: m.profile.username }}
+                  className="flex items-center gap-3 flex-1 min-w-0"
+                >
+                  <Avatar displayName={m.profile.display_name} avatarPath={m.profile.avatar_url} size={36} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{m.profile.display_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">@{m.profile.username} · {m.status}</p>
+                  </div>
+                </Link>
                 {m.role === "owner" && <span className="text-[10px] uppercase text-primary">Owner</span>}
               </li>
             ))}
           </ul>
-          <AddMemberInline onAdd={addMember} />
+          <div className="mt-4">
+            <UserSearch
+              placeholder="Add someone by username"
+              excludeIds={members.map((m) => m.user_id)}
+              onSelect={(p) => addMember(p)}
+            />
+          </div>
         </Sheet>
       )}
     </div>
@@ -460,25 +475,3 @@ function Sheet({ children, onClose, title }: { children: React.ReactNode; onClos
   );
 }
 
-function AddMemberInline({ onAdd }: { onAdd: (u: string) => Promise<void> }) {
-  const [u, setU] = useState("");
-  return (
-    <div className="mt-4 flex gap-2">
-      <input
-        className="flex-1 rounded-xl bg-input px-4 py-2 text-sm"
-        placeholder="Add by username"
-        value={u}
-        onChange={(e) => setU(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-      />
-      <button
-        onClick={async () => {
-          await onAdd(u);
-          setU("");
-        }}
-        className="rounded-full bg-primary text-primary-foreground px-4 text-sm font-medium"
-      >
-        Invite
-      </button>
-    </div>
-  );
-}
