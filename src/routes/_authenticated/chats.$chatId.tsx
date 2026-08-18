@@ -429,16 +429,27 @@ function ChatThread() {
           <ul className="mt-4 space-y-2">
             {members.map((m) => (
               <li key={m.user_id} className="flex items-center gap-3 p-2">
-                <Avatar displayName={m.profile.display_name} avatarPath={m.profile.avatar_url} size={36} />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{m.profile.display_name}</p>
-                  <p className="text-xs text-muted-foreground">@{m.profile.username} · {m.status}</p>
-                </div>
+                <Link
+                  to="/u/$username"
+                  params={{ username: m.profile.username }}
+                  className="flex items-center gap-3 flex-1 min-w-0"
+                >
+                  <Avatar displayName={m.profile.display_name} avatarPath={m.profile.avatar_url} size={36} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{m.profile.display_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">@{m.profile.username} · {m.status}</p>
+                  </div>
+                </Link>
                 {m.role === "owner" && <span className="text-[10px] uppercase text-primary">Owner</span>}
               </li>
             ))}
           </ul>
-          <AddMemberInline onAdd={addMember} />
+          <div className="mt-4">
+            <UserSearch
+              placeholder="Add someone by username"
+              excludeIds={members.map((m) => m.user_id)}
+              onSelect={(p) => addMember(p)}
+            />
         </Sheet>
       )}
     </div>
