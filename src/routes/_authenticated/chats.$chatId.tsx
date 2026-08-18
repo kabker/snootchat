@@ -279,8 +279,12 @@ function ChatThread() {
         </button>
         {chat.is_group ? (
           <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Users className="w-5 h-5" /></div>
+        ) : others[0] ? (
+          <Link to="/u/$username" params={{ username: others[0].profile.username }}>
+            <Avatar displayName={title} avatarPath={others[0].profile.avatar_url} size={40} />
+          </Link>
         ) : (
-          <Avatar displayName={title} avatarPath={others[0]?.profile.avatar_url} size={40} />
+          <Avatar displayName={title} size={40} />
         )}
         <div className="flex-1 min-w-0">
           <p className="font-semibold truncate">{title}</p>
