@@ -229,9 +229,7 @@ function ChatThread() {
     }
   }
 
-  async function addMember(username: string): Promise<void> {
-    const p = await findUserByUsername(username);
-    if (!p) { toast.error("No user with that username"); return; }
+  async function addMember(p: ProfileLite): Promise<void> {
     if (members.find((m) => m.user_id === p.id)) { toast.error("Already a member"); return; }
     const { error } = await supabase.from("chat_members").insert({
       chat_id: chatId,
