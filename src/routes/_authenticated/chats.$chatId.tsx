@@ -471,25 +471,3 @@ function Sheet({ children, onClose, title }: { children: React.ReactNode; onClos
   );
 }
 
-function AddMemberInline({ onAdd }: { onAdd: (u: string) => Promise<void> }) {
-  const [u, setU] = useState("");
-  return (
-    <div className="mt-4 flex gap-2">
-      <input
-        className="flex-1 rounded-xl bg-input px-4 py-2 text-sm"
-        placeholder="Add by username"
-        value={u}
-        onChange={(e) => setU(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-      />
-      <button
-        onClick={async () => {
-          await onAdd(u);
-          setU("");
-        }}
-        className="rounded-full bg-primary text-primary-foreground px-4 text-sm font-medium"
-      >
-        Invite
-      </button>
-    </div>
-  );
-}
