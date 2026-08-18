@@ -450,6 +450,7 @@ function ChatThread() {
               excludeIds={members.map((m) => m.user_id)}
               onSelect={(p) => addMember(p)}
             />
+          </div>
         </Sheet>
       )}
     </div>
