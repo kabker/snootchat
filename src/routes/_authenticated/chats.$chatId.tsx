@@ -6,7 +6,8 @@ import { Avatar } from "@/components/Avatar";
 import { bubbleClasses, BUBBLE_COLORS, CHAT_BACKGROUNDS, type BubbleColor, type PresetId } from "@/lib/chat-presets";
 import { resolveStorageUrl, uploadFile } from "@/lib/storage";
 import { ArrowLeft, Check, CheckCheck, Image as ImageIcon, Palette, Send, Settings, Users, X } from "lucide-react";
-import { findUserByUsername } from "@/lib/chats";
+import type { ProfileLite } from "@/lib/chats";
+import { UserSearch } from "@/components/UserSearch";
 
 export const Route = createFileRoute("/_authenticated/chats/$chatId")({
   component: ChatThread,
