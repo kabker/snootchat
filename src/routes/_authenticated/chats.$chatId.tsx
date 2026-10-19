@@ -415,7 +415,7 @@ function ChatThread() {
                 onClick={() => setPresetBackground(b.id)}
                 className={`aspect-square rounded-2xl ${b.className} flex items-end p-2 text-xs font-medium text-foreground [&>span]:bg-background/80 ${chat.background_type === "preset" && chat.background_value === b.id ? "ring-2 ring-primary" : ""}`}
               >
-                {b.name}
+                <span className="rounded-full px-2 py-0.5">{b.name}</span>
               </button>
             ))}
           </div>
