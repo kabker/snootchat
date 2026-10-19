@@ -79,7 +79,7 @@ function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-preset-midnight px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <form onSubmit={handleSave} className="w-full max-w-md bg-card rounded-3xl border border-border p-8">
         <h1 className="text-2xl font-bold mb-1">Set up your snoot</h1>
         <p className="text-sm text-muted-foreground mb-6">Choose how others will see you.</p>

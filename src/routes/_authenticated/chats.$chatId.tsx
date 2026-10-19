@@ -332,7 +332,7 @@ function ChatThread() {
               <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div className="max-w-[75%] flex flex-col gap-0.5">
                   {chat.is_group && !mine && sender && (
-                    <span className="text-[11px] text-white/80 px-2">{sender.profile.display_name}</span>
+                    <span className="text-[11px] text-foreground bg-background/80 rounded-full px-2 self-start">{sender.profile.display_name}</span>
                   )}
                   <div
                     className={`px-4 py-2 rounded-2xl break-words ${
@@ -344,7 +344,7 @@ function ChatThread() {
                     {m.body}
                   </div>
                   {mine && (
-                    <span className="self-end text-[10px] text-white/70 px-1 flex items-center gap-0.5">
+                    <span className="self-end text-[10px] text-muted-foreground bg-background/80 rounded-full px-1.5 flex items-center gap-0.5">
                       {m.delivered_at ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />}
                       {m.delivered_at ? "Delivered" : "Sent"}
                     </span>
@@ -413,9 +413,9 @@ function ChatThread() {
               <button
                 key={b.id}
                 onClick={() => setPresetBackground(b.id)}
-                className={`aspect-square rounded-2xl ${b.className} flex items-end p-2 text-xs font-medium text-white ${chat.background_type === "preset" && chat.background_value === b.id ? "ring-2 ring-primary" : ""}`}
+                className={`aspect-square rounded-2xl ${b.className} flex items-end p-2 text-xs font-medium text-foreground [&>span]:bg-background/80 ${chat.background_type === "preset" && chat.background_value === b.id ? "ring-2 ring-primary" : ""}`}
               >
-                {b.name}
+                <span className="rounded-full px-2 py-0.5">{b.name}</span>
               </button>
             ))}
           </div>
@@ -463,7 +463,7 @@ function ChatThread() {
 
 function Sheet({ children, onClose, title }: { children: React.ReactNode; onClose: () => void; title: string }) {
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-foreground/40 z-50 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
       <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold">{title}</h3>

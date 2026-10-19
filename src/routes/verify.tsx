@@ -81,7 +81,7 @@ function VerifyPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-preset-midnight px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md bg-card rounded-3xl border border-border p-8 shadow-2xl text-center">
         <div className="flex flex-col items-center mb-6">
           <img src={logo} alt="" className="w-16 h-16" width={512} height={512} />

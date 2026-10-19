@@ -3,11 +3,20 @@ import logo from "@/assets/snoot-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "SnootChat — Chat with friends" },
+      { name: "description", content: "SnootChat: request-to-chat messaging with groups, custom backgrounds and bubble colors." },
+      { property: "og:title", content: "SnootChat — Chat with friends" },
+      { property: "og:description", content: "Request-to-chat messaging with groups, custom backgrounds and bubble colors." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   beforeLoad: async () => {
     if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getSession();
     if (data.session) {
-      // Check onboarding
       const { data: profile } = await supabase
         .from("profiles")
         .select("id")
@@ -22,27 +31,25 @@ export const Route = createFileRoute("/")({
 
 function Landing() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center bg-preset-midnight">
-      <img src={logo} alt="SnootChat" className="w-28 h-28 mb-6" width={512} height={512} />
-      <h1 className="text-5xl font-bold tracking-tight">SnootChat</h1>
-      <p className="mt-3 max-w-md text-muted-foreground">
-        A cozy place to chat. Ask before you message, pick your vibe, and make every thread yours.
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center bg-background">
+      <img src={logo} alt="SnootChat" className="w-24 h-24 mb-8 object-contain" width={512} height={512} />
+      <h1 className="text-4xl font-bold tracking-tight text-foreground">Hang out anytime, anywhere</h1>
+      <p className="mt-4 max-w-md text-muted-foreground">
+        SnootChat makes it easy and fun to stay close to your favorite people.
       </p>
-      <div className="mt-8 flex gap-3">
-        <Link
-          to="/auth"
-          className="rounded-full bg-primary px-6 py-3 font-medium text-primary-foreground hover:opacity-90"
-        >
+      <div className="mt-8 flex flex-col gap-3 w-full max-w-xs">
+        <Link to="/auth" className="rounded-full bg-primary py-3 font-semibold text-primary-foreground hover:opacity-90">
           Get started
         </Link>
         <Link
           to="/auth"
           search={{ mode: "signin" }}
-          className="rounded-full border border-border px-6 py-3 font-medium hover:bg-secondary"
+          className="rounded-full bg-secondary py-3 font-semibold text-secondary-foreground hover:opacity-90"
         >
-          Sign in
+          Log in
         </Link>
       </div>
+      <p className="mt-12 text-xs text-muted-foreground">SnootChat</p>
     </div>
   );
 }

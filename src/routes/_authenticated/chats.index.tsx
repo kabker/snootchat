@@ -6,6 +6,7 @@ import { fetchMyChats, createDMChat, createGroupChat, type ChatSummary, type Pro
 import { UserSearch } from "@/components/UserSearch";
 import { Avatar } from "@/components/Avatar";
 import logo from "@/assets/snoot-logo.png";
+import { BottomNav } from "@/components/BottomNav";
 import { Settings as SettingsIcon, Plus, Users, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/chats/")({
@@ -68,25 +69,22 @@ function ChatsList() {
 
   return (
     <div className="min-h-screen max-w-2xl mx-auto px-4 pb-24">
-      <header className="flex items-center justify-between py-4 sticky top-0 bg-background z-10 border-b border-border">
+      <header className="flex items-center justify-between py-3 sticky top-0 bg-background z-10">
         <div className="flex items-center gap-2">
-          <img src={logo} alt="" className="w-9 h-9" width={512} height={512} />
-          <div>
-            <h1 className="text-lg font-bold leading-none">SnootChat</h1>
-            <p className="text-[11px] text-muted-foreground">chat cozy</p>
-          </div>
+          <img src={logo} alt="" className="w-8 h-8 object-contain" width={512} height={512} />
+          <h1 className="text-2xl font-bold">Chats</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowNew(true)}
-            className="rounded-full bg-primary text-primary-foreground p-2 hover:opacity-90"
+            className="rounded-full bg-secondary text-secondary-foreground p-2 hover:opacity-90"
             aria-label="New chat"
           >
             <Plus className="w-5 h-5" />
           </button>
           <Link
             to="/settings"
-            className="rounded-full border border-border p-2 hover:bg-secondary"
+            className="rounded-full bg-secondary p-2 hover:opacity-90"
             aria-label="Settings"
           >
             <SettingsIcon className="w-5 h-5" />
@@ -94,16 +92,16 @@ function ChatsList() {
         </div>
       </header>
 
-      <div className="flex gap-2 my-4">
+      <div className="flex gap-2 my-3">
         <button
           onClick={() => setTab("chats")}
-          className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "chats" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+          className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "chats" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"}`}
         >
           Chats {accepted.length > 0 && `(${accepted.length})`}
         </button>
         <button
           onClick={() => setTab("requests")}
-          className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "requests" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"}`}
+          className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "requests" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"}`}
         >
           Requests {pending.length > 0 && `(${pending.length})`}
         </button>
@@ -128,7 +126,7 @@ function ChatsList() {
       ) : (
         <ul className="space-y-2">
           {pending.map((c) => (
-            <li key={c.chat_id} className="rounded-2xl bg-card border border-border p-3 flex items-center gap-3">
+            <li key={c.chat_id} className="rounded-xl hover:bg-secondary p-3 flex items-center gap-3">
               <Avatar
                 displayName={c.is_group ? c.name ?? "Group" : c.other_members[0]?.display_name ?? "?"}
                 avatarPath={c.is_group ? null : c.other_members[0]?.avatar_url}
@@ -150,7 +148,7 @@ function ChatsList() {
               </button>
               <button
                 onClick={() => handleDecline(c.chat_id)}
-                className="rounded-full border border-border p-2"
+                className="rounded-full bg-secondary p-2"
                 aria-label="Decline"
               >
                 <X className="w-4 h-4" />
@@ -160,6 +158,7 @@ function ChatsList() {
         </ul>
       )}
 
+      <BottomNav />
       {showNew && <NewChatModal userId={userId} onClose={() => setShowNew(false)} onCreated={(id) => navigate({ to: "/chats/$chatId", params: { chatId: id } })} />}
     </div>
   );
@@ -170,7 +169,7 @@ function ChatRow({ chat, onOpen }: { chat: ChatSummary; onOpen: () => void }) {
   const avatarName = chat.is_group ? title : chat.other_members[0]?.display_name ?? "?";
   const avatarPath = chat.is_group ? null : chat.other_members[0]?.avatar_url;
   return (
-    <button onClick={onOpen} className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-card text-left">
+    <button onClick={onOpen} className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-secondary text-left">
       {chat.is_group ? (
         <div className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center">
           <Users className="w-5 h-5" />
@@ -234,7 +233,7 @@ function NewChatModal({ userId, onClose, onCreated }: { userId: string; onClose:
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-foreground/40 z-50 flex items-end sm:items-center justify-center p-4" onClick={onClose}>
       <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">New chat</h2>

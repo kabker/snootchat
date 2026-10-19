@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/Avatar";
 import { uploadFile } from "@/lib/storage";
+import { BottomNav } from "@/components/BottomNav";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
@@ -106,18 +107,18 @@ function SettingsPage() {
 
   return (
     <div className="min-h-screen max-w-2xl mx-auto px-4 pb-24">
-      <header className="flex items-center gap-3 py-4 sticky top-0 bg-background z-10 border-b border-border">
-        <Link to="/chats" className="rounded-full border border-border p-2 hover:bg-secondary">
+      <header className="flex items-center gap-3 py-3 sticky top-0 bg-background z-10">
+        <Link to="/chats" className="rounded-full bg-secondary p-2 hover:opacity-90">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-lg font-bold">Settings</h1>
+        <h1 className="text-2xl font-bold">Settings</h1>
       </header>
 
-      <section className="mt-6 bg-card border border-border rounded-3xl p-6">
+      <section className="mt-4 bg-secondary rounded-2xl p-5">
         <h2 className="font-semibold mb-4">Profile</h2>
         <div className="flex items-center gap-4 mb-5">
           <Avatar displayName={displayName || "?"} avatarPath={avatarPath} size={72} />
-          <label className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm hover:bg-secondary">
+          <label className="cursor-pointer rounded-full bg-background px-4 py-2 text-sm font-medium text-primary hover:opacity-90">
             Change photo
             <input type="file" accept="image/*" className="hidden" onChange={handleAvatar} />
           </label>
@@ -128,7 +129,7 @@ function SettingsPage() {
             <input
               value={username}
               disabled
-              className="w-full rounded-xl bg-input px-4 py-3 opacity-70 cursor-not-allowed mt-1"
+              className="w-full rounded-xl bg-background px-4 py-3 opacity-70 cursor-not-allowed mt-1"
             />
           </div>
           <div>
@@ -136,7 +137,7 @@ function SettingsPage() {
             <input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full rounded-xl bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-ring mt-1"
+              className="w-full rounded-xl bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-ring mt-1"
             />
           </div>
           <button
@@ -149,7 +150,7 @@ function SettingsPage() {
         </form>
       </section>
 
-      <section className="mt-6 bg-card border border-border rounded-3xl p-6">
+      <section className="mt-4 bg-secondary rounded-2xl p-5">
         <h2 className="font-semibold mb-1">{hasPassword ? "Change password" : "Set a password"}</h2>
         <p className="text-xs text-muted-foreground mb-4">
           {hasPassword
@@ -162,7 +163,7 @@ function SettingsPage() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="New password"
-            className="w-full rounded-xl bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-xl bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-ring"
             required
           />
           <button
@@ -178,11 +179,12 @@ function SettingsPage() {
       <section className="mt-6">
         <button
           onClick={handleSignOut}
-          className="w-full rounded-full border border-border py-3 font-medium hover:bg-secondary"
+          className="w-full rounded-2xl bg-secondary py-3 font-semibold text-destructive hover:opacity-90"
         >
           Sign out
         </button>
       </section>
+      <BottomNav />
     </div>
   );
 }
