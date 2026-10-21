@@ -5,12 +5,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/Avatar";
 import { bubbleClasses, BUBBLE_COLORS, CHAT_BACKGROUNDS, type BubbleColor, type PresetId } from "@/lib/chat-presets";
 import { resolveStorageUrl, uploadFile } from "@/lib/storage";
-import { ArrowLeft, Check, CheckCheck, Image as ImageIcon, Palette, Send, Settings, Users, X } from "lucide-react";
+import { ArrowLeft, Check, CheckCheck, Image as ImageIcon, Info, Palette, Send, Settings, Users, X, UserRound, ChevronRight } from "lucide-react";
 import type { ProfileLite } from "@/lib/chats";
 import { UserSearch } from "@/components/UserSearch";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/chats/$chatId")({
   component: ChatThread,
+  head: () => ({ meta: [
+    { title: "Conversation · SnootChat" },
+    { name: "description", content: "Chat with friends and personalize your SnootChat conversation." },
+    { property: "og:title", content: "Conversation · SnootChat" },
+    { property: "og:description", content: "Chat with friends and personalize your SnootChat conversation." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 type Chat = {
@@ -52,6 +61,7 @@ function ChatThread() {
   const [showBg, setShowBg] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [customBgUrl, setCustomBgUrl] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -272,11 +282,12 @@ function ChatThread() {
     : others[0]?.profile.display_name ?? "Chat";
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="flex items-center gap-3 px-3 py-2 border-b border-border bg-background sticky top-0 z-10">
-        <button onClick={() => navigate({ to: "/chats" })} className="p-2 rounded-full hover:bg-secondary">
+    <div className="h-full flex relative">
+    <div className="min-w-0 flex-1 flex flex-col h-full">
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-background shrink-0 z-10">
+        <Button variant="ghost" size="icon" aria-label="Back to chats" onClick={() => navigate({ to: "/chats" })} className="rounded-full md:hidden">
           <ArrowLeft className="w-5 h-5" />
-        </button>
+        </Button>
         {chat.is_group ? (
           <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Users className="w-5 h-5" /></div>
         ) : others[0] ? (
@@ -307,11 +318,12 @@ function ChatThread() {
             <Settings className="w-5 h-5" />
           </button>
         )}
+        <Button variant="ghost" size="icon" className="rounded-full text-primary" aria-label="Chat details" title="Chat details" onClick={() => setShowDetails(!showDetails)}><Info /></Button>
       </header>
 
       <div
         ref={scrollRef}
-        className={`flex-1 overflow-y-auto px-3 py-4 ${bgPresetClass}`}
+        className={`flex-1 min-h-0 overflow-y-auto px-4 py-6 ${bgPresetClass}`}
         style={
           chat.background_type === "custom" && customBgUrl
             ? { backgroundImage: `url(${customBgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -365,6 +377,7 @@ function ChatThread() {
           className="max-w-2xl mx-auto flex gap-2 items-end"
         >
           <textarea
+            aria-label="Message"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -376,7 +389,7 @@ function ChatThread() {
             placeholder={myMembership.status === "accepted" ? "Message…" : "Accept the invite to send messages"}
             disabled={myMembership.status !== "accepted"}
             rows={1}
-            className="flex-1 resize-none rounded-2xl bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-ring max-h-32 disabled:opacity-60"
+            className="flex-1 min-w-0 resize-none rounded-full bg-input px-4 py-2.5 outline-none focus:ring-2 focus:ring-ring max-h-32 disabled:opacity-60"
           />
           <button
             type="submit"
@@ -388,6 +401,21 @@ function ChatThread() {
           </button>
         </form>
       </div>
+
+    </div>
+    {showDetails && <aside aria-label="Chat details panel" className="absolute inset-0 z-20 bg-background md:static md:w-64 xl:w-72 shrink-0 border-l border-border overflow-y-auto p-5">
+      <div className="flex justify-end"><Button variant="ghost" size="icon" aria-label="Close chat details" onClick={() => setShowDetails(false)}><X /></Button></div>
+      <div className="flex flex-col items-center text-center pt-4 pb-8">
+        {chat.is_group ? <div className="size-20 rounded-full bg-secondary flex items-center justify-center"><Users className="size-9" /></div> : <Avatar displayName={title} avatarPath={others[0]?.profile.avatar_url} size={80} />}
+        <h2 className="font-bold mt-4 break-words w-full">{title}</h2>
+        {!chat.is_group && <p className="text-sm text-muted-foreground break-all">@{others[0]?.profile.username}</p>}
+        {!chat.is_group && others[0] && <Button asChild variant="secondary" size="icon" className="rounded-full mt-4"><Link to="/u/$username" params={{ username: others[0].profile.username }} title="View profile" aria-label="View profile"><UserRound /></Link></Button>}
+      </div>
+      <h3 className="text-sm font-semibold mb-3">Customize chat</h3>
+      <Button variant="ghost" onClick={() => setShowBubble(true)} className="w-full justify-start h-12"><Palette /> Bubble color <ChevronRight className="ml-auto" /></Button>
+      <Button variant="ghost" onClick={() => setShowBg(true)} className="w-full justify-start h-12"><ImageIcon /> Background <ChevronRight className="ml-auto" /></Button>
+      {chat.is_group && <Button variant="ghost" onClick={() => setShowMembers(true)} className="w-full justify-start h-12"><Users /> Members <ChevronRight className="ml-auto" /></Button>}
+    </aside>}
 
       {showBubble && (
         <Sheet onClose={() => setShowBubble(false)} title="Your bubble color">

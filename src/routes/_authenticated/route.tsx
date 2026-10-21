@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { DesktopNav } from "@/components/DesktopNav";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -14,5 +15,10 @@ export const Route = createFileRoute("/_authenticated")({
     if (!profile) throw redirect({ to: "/onboarding" });
     return { userId: data.user.id };
   },
-  component: () => <Outlet />,
+  component: AuthenticatedLayout,
 });
+
+function AuthenticatedLayout() {
+  const { userId } = Route.useRouteContext();
+  return <div className="md:flex md:h-dvh md:overflow-hidden"><DesktopNav userId={userId} /><main className="min-w-0 flex-1 md:h-full md:overflow-y-auto"><Outlet /></main></div>;
+}
