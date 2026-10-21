@@ -10,6 +10,14 @@ const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() })
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s) => searchSchema.parse(s),
+  head: () => ({ meta: [
+    { title: "Sign in or join · SnootChat" },
+    { name: "description", content: "Sign in or create a SnootChat account to connect with friends." },
+    { property: "og:title", content: "Sign in or join · SnootChat" },
+    { property: "og:description", content: "Sign in or create a SnootChat account to connect with friends." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AuthPage,
 });
 

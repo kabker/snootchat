@@ -73,7 +73,7 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setShowNew(true)}
-            className="rounded-full bg-secondary text-secondary-foreground p-2 hover:opacity-90"
+            variant="secondary" size="icon" className="rounded-full"
             aria-label="New chat"
           >
             <SquarePen className="w-5 h-5" />
@@ -87,13 +87,13 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
         <input aria-label="Search chats" placeholder="Search chats" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full min-w-0 bg-transparent text-sm outline-none" />
       </label>
       <div className="flex gap-2 my-3 shrink-0">
-        <Button
+        <Button variant="ghost"
           onClick={() => setTab("chats")}
           className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "chats" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"}`}
         >
           Chats {accepted.length > 0 && `(${accepted.length})`}
         </Button>
-        <Button
+        <Button variant="ghost"
           onClick={() => setTab("requests")}
           className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "requests" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"}`}
         >
@@ -143,7 +143,7 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
               </Button>
               <Button
                 onClick={() => handleDecline(c.chat_id)}
-                className="rounded-full bg-secondary p-2"
+                variant="secondary" size="icon" className="rounded-full"
                 aria-label="Decline"
               >
                 <X className="w-4 h-4" />
@@ -232,11 +232,11 @@ function NewChatModal({ userId, onClose, onCreated }: { userId: string; onClose:
       <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">New chat</h2>
-          <Button onClick={onClose}><X className="w-5 h-5" /></Button>
+          <Button variant="ghost" size="icon" aria-label="Close new chat" onClick={onClose}><X className="w-5 h-5" /></Button>
         </div>
         <div className="flex gap-2 mb-4">
-          <Button onClick={() => { setMode("dm"); setSelected([]); }} className={`flex-1 py-2 rounded-full text-sm font-medium ${mode === "dm" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>Direct</Button>
-          <Button onClick={() => { setMode("group"); setSelected([]); }} className={`flex-1 py-2 rounded-full text-sm font-medium ${mode === "group" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>Group</Button>
+          <Button variant="secondary" onClick={() => { setMode("dm"); setSelected([]); }} className={`flex-1 py-2 rounded-full text-sm font-medium ${mode === "dm" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>Direct</Button>
+          <Button variant="secondary" onClick={() => { setMode("group"); setSelected([]); }} className={`flex-1 py-2 rounded-full text-sm font-medium ${mode === "group" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>Group</Button>
         </div>
         {mode === "group" && (
           <input
@@ -257,7 +257,7 @@ function NewChatModal({ userId, onClose, onCreated }: { userId: string; onClose:
               <li key={m.id} className="flex items-center gap-2 bg-secondary rounded-full pl-1 pr-3 py-1 text-sm">
                 <Avatar displayName={m.display_name} avatarPath={m.avatar_url} size={22} />
                 <span>@{m.username}</span>
-                <Button onClick={() => setSelected(selected.filter((x) => x.id !== m.id))} aria-label="Remove">
+                <Button variant="ghost" size="icon" onClick={() => setSelected(selected.filter((x) => x.id !== m.id))} aria-label="Remove">
                   <X className="w-3 h-3" />
                 </Button>
               </li>

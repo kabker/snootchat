@@ -64,8 +64,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "SnootChat" },
       { name: "twitter:description", content: "SnootChat is a cozy, request-to-chat messaging app with customizable bubbles and backgrounds." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8ef59062-37be-4136-990e-eb1474843724/id-preview-aa7191e8--9f6e0be7-7cd7-474c-b80e-4e30e6cba7dc.lovable.app-1784050461366.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8ef59062-37be-4136-990e-eb1474843724/id-preview-aa7191e8--9f6e0be7-7cd7-474c-b80e-4e30e6cba7dc.lovable.app-1784050461366.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -106,7 +104,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
-      <Toaster theme="dark" position="top-center" richColors />
+      <Toaster theme="light" position="top-center" richColors />
     </QueryClientProvider>
   );
 }
