@@ -164,7 +164,7 @@ function ChatRow({ chat, active, onOpen }: { chat: ChatSummary; active: boolean;
   const avatarName = chat.is_group ? title : chat.other_members[0]?.display_name ?? "?";
   const avatarPath = chat.is_group ? null : chat.other_members[0]?.avatar_url;
   return (
-    <Button onClick={onOpen} variant="ghost" className={`w-full h-auto justify-start gap-3 p-3 rounded-lg text-left ${active ? "bg-secondary" : ""}`}>
+    <Button onClick={onOpen} variant="ghost" className={`w-full h-auto justify-start gap-3 p-3 rounded-lg text-left hover:bg-secondary hover:text-foreground ${active ? "bg-secondary" : ""}`}>
       {chat.is_group ? (
         <div className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center">
           <Users className="w-5 h-5" />
