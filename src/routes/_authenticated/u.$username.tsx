@@ -11,6 +11,8 @@ export const Route = createFileRoute("/_authenticated/u/$username")({
     meta: [
       { title: "Profile · SnootChat" },
       { name: "description", content: "View a SnootChat member's profile and start a chat request." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { property: "og:title", content: "Profile · SnootChat" },
       { property: "og:description", content: "View a SnootChat member's profile and start a chat request." },
     ],

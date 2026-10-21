@@ -9,6 +9,14 @@ const searchSchema = z.object({ email: z.string().email().optional() });
 
 export const Route = createFileRoute("/verify")({
   validateSearch: (s) => searchSchema.parse(s),
+  head: () => ({ meta: [
+    { title: "Verify your email · SnootChat" },
+    { name: "description", content: "Confirm your email address to start chatting on SnootChat." },
+    { property: "og:title", content: "Verify your email · SnootChat" },
+    { property: "og:description", content: "Confirm your email address to start chatting on SnootChat." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: VerifyPage,
 });
 

@@ -5,12 +5,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/Avatar";
 import { bubbleClasses, BUBBLE_COLORS, CHAT_BACKGROUNDS, type BubbleColor, type PresetId } from "@/lib/chat-presets";
 import { resolveStorageUrl, uploadFile } from "@/lib/storage";
-import { ArrowLeft, Check, CheckCheck, Image as ImageIcon, Palette, Send, Settings, Users, X } from "lucide-react";
+import { ArrowLeft, Check, CheckCheck, Image as ImageIcon, Info, Palette, Send, Settings, Users, X, UserRound, ChevronRight } from "lucide-react";
 import type { ProfileLite } from "@/lib/chats";
 import { UserSearch } from "@/components/UserSearch";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/chats/$chatId")({
   component: ChatThread,
+  head: () => ({ meta: [
+    { title: "Conversation · SnootChat" },
+    { name: "description", content: "Chat with friends and personalize your SnootChat conversation." },
+    { property: "og:title", content: "Conversation · SnootChat" },
+    { property: "og:description", content: "Chat with friends and personalize your SnootChat conversation." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
 });
 
 type Chat = {
@@ -52,7 +61,9 @@ function ChatThread() {
   const [showBg, setShowBg] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const [customBgUrl, setCustomBgUrl] = useState<string | null>(null);
+  useEffect(() => { setShowDetails(window.matchMedia("(min-width: 1100px)").matches); }, []);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const myMembership = members.find((m) => m.user_id === userId);
@@ -251,12 +262,12 @@ function ChatThread() {
         <p className="text-muted-foreground">Unable to open this chat.</p>
         {loadError && <p className="max-w-md text-sm text-muted-foreground">{loadError}</p>}
         <div className="flex gap-2">
-          <button onClick={() => navigate({ to: "/chats" })} className="rounded-full bg-secondary px-4 py-2 text-sm font-medium">
+          <Button onClick={() => navigate({ to: "/chats" })} className="rounded-full bg-secondary px-4 py-2 text-sm font-medium">
             Back to chats
-          </button>
-          <button onClick={() => loadAll(true)} className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-medium">
+          </Button>
+          <Button onClick={() => loadAll(true)} className="rounded-full bg-primary text-primary-foreground px-4 py-2 text-sm font-medium">
             Try again
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -272,11 +283,12 @@ function ChatThread() {
     : others[0]?.profile.display_name ?? "Chat";
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="flex items-center gap-3 px-3 py-2 border-b border-border bg-background sticky top-0 z-10">
-        <button onClick={() => navigate({ to: "/chats" })} className="p-2 rounded-full hover:bg-secondary">
+    <div className="h-full flex relative">
+    <div className="min-w-0 flex-1 flex flex-col h-full">
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-background shrink-0 z-10">
+        <Button variant="ghost" size="icon" aria-label="Back to chats" onClick={() => navigate({ to: "/chats" })} className="rounded-full md:hidden">
           <ArrowLeft className="w-5 h-5" />
-        </button>
+        </Button>
         {chat.is_group ? (
           <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Users className="w-5 h-5" /></div>
         ) : others[0] ? (
@@ -296,22 +308,23 @@ function ChatThread() {
                 : `@${others[0]?.profile.username ?? ""}`}
           </p>
         </div>
-        <button onClick={() => setShowBubble(true)} className="p-2 rounded-full hover:bg-secondary" aria-label="Bubble color">
+        <Button variant="ghost" size="icon" title="Chat customization" onClick={() => setShowBubble(true)} className="p-2 rounded-full hover:bg-secondary" aria-label="Bubble color">
           <Palette className="w-5 h-5" />
-        </button>
-        <button onClick={() => setShowBg(true)} className="p-2 rounded-full hover:bg-secondary" aria-label="Background">
+        </Button>
+        <Button variant="ghost" size="icon" title="Chat customization" onClick={() => setShowBg(true)} className="p-2 rounded-full hover:bg-secondary" aria-label="Background">
           <ImageIcon className="w-5 h-5" />
-        </button>
+        </Button>
         {chat.is_group && (
-          <button onClick={() => setShowMembers(true)} className="p-2 rounded-full hover:bg-secondary" aria-label="Members">
+          <Button variant="ghost" size="icon" title="Chat customization" onClick={() => setShowMembers(true)} className="p-2 rounded-full hover:bg-secondary" aria-label="Members">
             <Settings className="w-5 h-5" />
-          </button>
+          </Button>
         )}
+        <Button variant="ghost" size="icon" className="rounded-full text-primary" aria-label="Chat details" title="Chat details" onClick={() => setShowDetails(!showDetails)}><Info /></Button>
       </header>
 
       <div
         ref={scrollRef}
-        className={`flex-1 overflow-y-auto px-3 py-4 ${bgPresetClass}`}
+        className={`flex-1 min-h-0 overflow-y-auto px-4 py-6 ${bgPresetClass}`}
         style={
           chat.background_type === "custom" && customBgUrl
             ? { backgroundImage: `url(${customBgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -335,10 +348,10 @@ function ChatThread() {
                     <span className="text-[11px] text-foreground bg-background/80 rounded-full px-2 self-start">{sender.profile.display_name}</span>
                   )}
                   <div
-                    className={`px-4 py-2 rounded-2xl break-words ${
+                    className={`px-4 py-2 rounded-2xl whitespace-pre-wrap [overflow-wrap:anywhere] ${
                       mine
                         ? bubbleClasses(color)
-                        : "bg-[var(--bubble-gray)] text-[var(--bubble-gray-foreground)]"
+                        : "bg-bubble-gray text-bubble-gray-foreground"
                     }`}
                   >
                     {m.body}
@@ -365,6 +378,7 @@ function ChatThread() {
           className="max-w-2xl mx-auto flex gap-2 items-end"
         >
           <textarea
+            aria-label="Message"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -376,30 +390,45 @@ function ChatThread() {
             placeholder={myMembership.status === "accepted" ? "Message…" : "Accept the invite to send messages"}
             disabled={myMembership.status !== "accepted"}
             rows={1}
-            className="flex-1 resize-none rounded-2xl bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-ring max-h-32 disabled:opacity-60"
+            className="flex-1 min-w-0 resize-none rounded-full bg-input px-4 py-2.5 outline-none focus:ring-2 focus:ring-ring max-h-32 disabled:opacity-60"
           />
-          <button
+          <Button
             type="submit"
             disabled={!input.trim() || myMembership.status !== "accepted"}
-            className="rounded-full bg-primary text-primary-foreground p-3 disabled:opacity-40"
+            variant="ghost" size="icon" className="rounded-full text-primary size-11 disabled:opacity-40"
             aria-label="Send"
           >
             <Send className="w-5 h-5" />
-          </button>
+          </Button>
         </form>
       </div>
+
+    </div>
+    {showDetails && <aside aria-label="Chat details panel" className="absolute inset-0 z-20 bg-background lg:static lg:w-64 xl:w-72 shrink-0 border-l border-border overflow-y-auto p-5">
+      <div className="flex justify-end"><Button variant="ghost" size="icon" aria-label="Close chat details" onClick={() => setShowDetails(false)}><X /></Button></div>
+      <div className="flex flex-col items-center text-center pt-4 pb-8">
+        {chat.is_group ? <div className="size-20 rounded-full bg-secondary flex items-center justify-center"><Users className="size-9" /></div> : <Avatar displayName={title} avatarPath={others[0]?.profile.avatar_url} size={80} />}
+        <h2 className="font-bold mt-4 break-words w-full">{title}</h2>
+        {!chat.is_group && <p className="text-sm text-muted-foreground break-all">@{others[0]?.profile.username}</p>}
+        {!chat.is_group && others[0] && <Button asChild variant="secondary" size="icon" className="rounded-full mt-4"><Link to="/u/$username" params={{ username: others[0].profile.username }} title="View profile" aria-label="View profile"><UserRound /></Link></Button>}
+      </div>
+      <h3 className="text-sm font-semibold mb-3">Customize chat</h3>
+      <Button variant="ghost" onClick={() => setShowBubble(true)} className="w-full justify-start h-12"><Palette /> Bubble color <ChevronRight className="ml-auto" /></Button>
+      <Button variant="ghost" onClick={() => setShowBg(true)} className="w-full justify-start h-12"><ImageIcon /> Background <ChevronRight className="ml-auto" /></Button>
+      {chat.is_group && <Button variant="ghost" onClick={() => setShowMembers(true)} className="w-full justify-start h-12"><Users /> Members <ChevronRight className="ml-auto" /></Button>}
+    </aside>}
 
       {showBubble && (
         <Sheet onClose={() => setShowBubble(false)} title="Your bubble color">
           <div className="grid grid-cols-4 gap-3 mt-4">
             {BUBBLE_COLORS.map((c) => (
-              <button
+              <Button variant="ghost"
                 key={c}
                 onClick={() => setBubbleColor(c)}
-                className={`aspect-square rounded-2xl ${bubbleClasses(c)} flex items-end p-2 text-xs font-medium capitalize ${myMembership.bubble_color === c ? "ring-2 ring-primary" : ""}`}
+                className={`h-auto aspect-square rounded-lg ${bubbleClasses(c)} flex items-end p-2 text-xs font-medium capitalize ${myMembership.bubble_color === c ? "ring-2 ring-primary" : ""}`}
               >
                 {c}
-              </button>
+              </Button>
             ))}
           </div>
           <p className="mt-3 text-xs text-muted-foreground">Only your sent messages use this color. Each person picks their own.</p>
@@ -410,13 +439,13 @@ function ChatThread() {
         <Sheet onClose={() => setShowBg(false)} title="Chat background">
           <div className="grid grid-cols-4 gap-3 mt-4">
             {CHAT_BACKGROUNDS.map((b) => (
-              <button
+              <Button variant="ghost"
                 key={b.id}
                 onClick={() => setPresetBackground(b.id)}
-                className={`aspect-square rounded-2xl ${b.className} flex items-end p-2 text-xs font-medium text-foreground [&>span]:bg-background/80 ${chat.background_type === "preset" && chat.background_value === b.id ? "ring-2 ring-primary" : ""}`}
+                className={`h-auto aspect-square rounded-lg ${b.className} flex items-end p-2 text-xs font-medium text-foreground [&>span]:bg-background/80 ${chat.background_type === "preset" && chat.background_value === b.id ? "ring-2 ring-primary" : ""}`}
               >
                 <span className="rounded-full px-2 py-0.5">{b.name}</span>
-              </button>
+              </Button>
             ))}
           </div>
           <label className="mt-4 block cursor-pointer rounded-2xl border border-dashed border-border p-4 text-center hover:bg-secondary">
@@ -467,7 +496,7 @@ function Sheet({ children, onClose, title }: { children: React.ReactNode; onClos
       <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold">{title}</h3>
-          <button onClick={onClose}><X className="w-5 h-5" /></button>
+          <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}><X className="w-5 h-5" /></Button>
         </div>
         {children}
       </div>

@@ -6,6 +6,14 @@ import { uploadFile } from "@/lib/storage";
 import { Avatar } from "@/components/Avatar";
 
 export const Route = createFileRoute("/onboarding")({
+  head: () => ({ meta: [
+    { title: "Set up your profile · SnootChat" },
+    { name: "description", content: "Choose your username, display name, and profile photo on SnootChat." },
+    { property: "og:title", content: "Set up your profile · SnootChat" },
+    { property: "og:description", content: "Choose your username, display name, and profile photo on SnootChat." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Onboarding,
 });
 
