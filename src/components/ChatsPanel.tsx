@@ -193,7 +193,7 @@ function ChatRow({ chat, active, onOpen }: { chat: ChatSummary; active: boolean;
 function EmptyState({ onNew, isGroups }: { onNew: () => void; isGroups?: boolean }) {
   return (
     <div className="text-center py-16">
-      <img src={logo} alt="" className="w-20 h-20 mx-auto opacity-70" width={512} height={512} />
+      <img src={logo} alt="" draggable={false} className="w-20 h-20 mx-auto opacity-70" width={512} height={512} />
       <p className="mt-4 text-muted-foreground">{isGroups ? "No group chats yet. Create one to bring people together." : "No chats yet. Send a request to start one."}</p>
       <Button onClick={onNew} className="mt-4 rounded-full bg-primary text-primary-foreground px-5 py-2.5 font-medium">
         New chat

@@ -140,4 +140,9 @@
     color: var(--color-foreground);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   }
+  img,
+  svg {
+    -webkit-user-drag: none;
+    user-select: none;
+  }
 }

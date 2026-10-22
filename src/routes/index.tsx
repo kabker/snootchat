@@ -32,7 +32,7 @@ export const Route = createFileRoute("/")({
 function Landing() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center bg-background">
-      <img src={logo} alt="SnootChat" className="w-24 h-24 mb-8 object-contain" width={512} height={512} />
+      <img src={logo} alt="SnootChat" draggable={false} className="w-24 h-24 mb-8 object-contain" width={512} height={512} />
       <h1 className="text-4xl font-bold tracking-tight text-foreground">Hang out anytime, anywhere</h1>
       <p className="mt-4 max-w-md text-muted-foreground">
         SnootChat makes it easy and fun to stay close to your favorite people.

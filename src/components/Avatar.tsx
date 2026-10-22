@@ -35,7 +35,7 @@ export function Avatar({
       style={{ width: size, height: size, background: bg, fontSize: size * 0.4 }}
     >
       {url ? (
-        <img src={url} alt={displayName} className="w-full h-full object-cover" />
+        <img src={url} alt={displayName} draggable={false} className="w-full h-full object-cover" />
       ) : (
         <span>{initials}</span>
       )}
