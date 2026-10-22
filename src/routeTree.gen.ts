@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AuthenticatedChatsRouteImport } from './routes/_authenticated/chats'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedChatsIndexRouteImport } from './routes/_authenticated/chats.index'
 import { Route as AuthenticatedChatsChatIdRouteImport } from './routes/_authenticated/chats.$chatId'
@@ -49,6 +50,11 @@ const AuthenticatedChatsRoute = AuthenticatedChatsRouteImport.update({
   path: '/chats',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -77,6 +83,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/verify': typeof VerifyRoute
   '/chats': typeof AuthenticatedChatsRouteWithChildren
+  '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/chats/$chatId': typeof AuthenticatedChatsChatIdRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
   '/verify': typeof VerifyRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/chats/$chatId': typeof AuthenticatedChatsChatIdRoute
   '/u/$username': typeof AuthenticatedUUsernameRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/verify': typeof VerifyRoute
   '/_authenticated/chats': typeof AuthenticatedChatsRouteWithChildren
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/chats/$chatId': typeof AuthenticatedChatsChatIdRoute
   '/_authenticated/u/$username': typeof AuthenticatedUUsernameRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/verify'
     | '/chats'
+    | '/profile'
     | '/settings'
     | '/chats/$chatId'
     | '/u/$username'
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/verify'
+    | '/profile'
     | '/settings'
     | '/chats/$chatId'
     | '/u/$username'
@@ -135,6 +146,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/verify'
     | '/_authenticated/chats'
+    | '/_authenticated/profile'
     | '/_authenticated/settings'
     | '/_authenticated/chats/$chatId'
     | '/_authenticated/u/$username'
@@ -193,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -239,12 +258,14 @@ const AuthenticatedChatsRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatsRoute: typeof AuthenticatedChatsRouteWithChildren
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedUUsernameRoute: typeof AuthenticatedUUsernameRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatsRoute: AuthenticatedChatsRouteWithChildren,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedUUsernameRoute: AuthenticatedUUsernameRoute,
 }
