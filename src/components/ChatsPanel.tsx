@@ -11,7 +11,7 @@ import { Search, SquarePen, Users, X } from "lucide-react";
 
 export function ChatsPanel({ userId, activeChatId }: { userId: string; activeChatId?: string }) {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"chats" | "requests">("chats");
+  const [tab, setTab] = useState<"chats" | "groups" | "requests">("chats");
   const [chats, setChats] = useState<ChatSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
@@ -43,6 +43,8 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
 
   const accepted = chats.filter((c) => c.status === "accepted" && `${c.name ?? ""} ${c.other_members.map((m) => `${m.display_name} ${m.username}`).join(" ")}`.toLowerCase().includes(search.toLowerCase()));
   const pending = chats.filter((c) => c.status === "pending");
+  const groupChats = accepted.filter((c) => c.is_group);
+  const visible = tab === "groups" ? groupChats : tab === "requests" ? [] : accepted;
 
   async function handleAccept(chatId: string) {
     const { error } = await supabase.rpc("respond_to_invite", {
@@ -94,6 +96,12 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
           Chats {accepted.length > 0 && `(${accepted.length})`}
         </Button>
         <Button variant="ghost"
+          onClick={() => setTab("groups")}
+          className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "groups" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+        >
+          Groups {groupChats.length > 0 && `(${groupChats.length})`}
+        </Button>
+        <Button variant="ghost"
           onClick={() => setTab("requests")}
           className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "requests" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"}`}
         >
@@ -104,50 +112,50 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
       <div className="min-h-0 flex-1 overflow-y-auto">
       {loading ? (
         <p className="text-muted-foreground text-center py-10">Loading…</p>
-      ) : tab === "chats" ? (
-        accepted.length === 0 ? (
-          search ? <p className="py-10 text-center text-sm text-muted-foreground">No matching chats.</p> : <EmptyState onNew={() => setShowNew(true)} />
+      ) : tab === "requests" ? (
+        pending.length === 0 ? (
+          <p className="text-center text-muted-foreground py-10">No pending requests.</p>
         ) : (
-          <ul className="space-y-1">
-            {accepted.map((c) => (
-              <li key={c.chat_id}>
-                <ChatRow chat={c} active={activeChatId === c.chat_id} onOpen={() => navigate({ to: "/chats/$chatId", params: { chatId: c.chat_id } })} />
+          <ul className="space-y-2">
+            {pending.map((c) => (
+              <li key={c.chat_id} className="rounded-xl hover:bg-secondary p-3 flex items-center gap-3">
+                <Avatar
+                  displayName={c.is_group ? c.name ?? "Group" : c.other_members[0]?.display_name ?? "?"}
+                  avatarPath={c.is_group ? null : c.other_members[0]?.avatar_url}
+                  size={44}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">
+                    {c.is_group ? c.name ?? "Group chat" : c.other_members[0]?.display_name ?? "Someone"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {c.is_group ? "wants to add you to a group" : "wants to chat with you"}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => handleAccept(c.chat_id)}
+                  className="rounded-full bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium"
+                >
+                  Accept
+                </Button>
+                <Button
+                  onClick={() => handleDecline(c.chat_id)}
+                  variant="secondary" size="icon" className="rounded-full"
+                  aria-label="Decline"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </li>
             ))}
           </ul>
         )
-      ) : pending.length === 0 ? (
-        <p className="text-center text-muted-foreground py-10">No pending requests.</p>
+      ) : visible.length === 0 ? (
+        search ? <p className="py-10 text-center text-sm text-muted-foreground">No matching chats.</p> : <EmptyState onNew={() => setShowNew(true)} isGroups={tab === "groups"} />
       ) : (
-        <ul className="space-y-2">
-          {pending.map((c) => (
-            <li key={c.chat_id} className="rounded-xl hover:bg-secondary p-3 flex items-center gap-3">
-              <Avatar
-                displayName={c.is_group ? c.name ?? "Group" : c.other_members[0]?.display_name ?? "?"}
-                avatarPath={c.is_group ? null : c.other_members[0]?.avatar_url}
-                size={44}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">
-                  {c.is_group ? c.name ?? "Group chat" : c.other_members[0]?.display_name ?? "Someone"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {c.is_group ? "wants to add you to a group" : "wants to chat with you"}
-                </p>
-              </div>
-              <Button
-                onClick={() => handleAccept(c.chat_id)}
-                className="rounded-full bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium"
-              >
-                Accept
-              </Button>
-              <Button
-                onClick={() => handleDecline(c.chat_id)}
-                variant="secondary" size="icon" className="rounded-full"
-                aria-label="Decline"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+        <ul className="space-y-1">
+          {visible.map((c) => (
+            <li key={c.chat_id}>
+              <ChatRow chat={c} active={activeChatId === c.chat_id} onOpen={() => navigate({ to: "/chats/$chatId", params: { chatId: c.chat_id } })} />
             </li>
           ))}
         </ul>
@@ -182,11 +190,11 @@ function ChatRow({ chat, active, onOpen }: { chat: ChatSummary; active: boolean;
   );
 }
 
-function EmptyState({ onNew }: { onNew: () => void }) {
+function EmptyState({ onNew, isGroups }: { onNew: () => void; isGroups?: boolean }) {
   return (
     <div className="text-center py-16">
       <img src={logo} alt="" className="w-20 h-20 mx-auto opacity-70" width={512} height={512} />
-      <p className="mt-4 text-muted-foreground">No chats yet. Send a request to start one.</p>
+      <p className="mt-4 text-muted-foreground">{isGroups ? "No group chats yet. Create one to bring people together." : "No chats yet. Send a request to start one."}</p>
       <Button onClick={onNew} className="mt-4 rounded-full bg-primary text-primary-foreground px-5 py-2.5 font-medium">
         New chat
       </Button>
