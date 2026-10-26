@@ -14,6 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
+      call_participants: {
+        Row: {
+          call_id: string
+          state: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          call_id: string
+          state?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          call_id?: string
+          state?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_participants_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "chat_calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_signals: {
+        Row: {
+          call_id: string
+          created_at: string
+          id: string
+          payload: Json
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          call_id: string
+          created_at?: string
+          id?: string
+          payload: Json
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          call_id?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_signals_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "chat_calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_calls: {
+        Row: {
+          caller_id: string
+          chat_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          kind: string
+          status: string
+        }
+        Insert: {
+          caller_id: string
+          chat_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind: string
+          status?: string
+        }
+        Update: {
+          caller_id?: string
+          chat_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_calls_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_members: {
         Row: {
           bubble_color: string
@@ -87,6 +189,7 @@ export type Database = {
       }
       messages: {
         Row: {
+          attachment_path: string | null
           body: string
           chat_id: string
           created_at: string
@@ -95,6 +198,7 @@ export type Database = {
           sender_id: string
         }
         Insert: {
+          attachment_path?: string | null
           body: string
           chat_id: string
           created_at?: string
@@ -103,6 +207,7 @@ export type Database = {
           sender_id: string
         }
         Update: {
+          attachment_path?: string | null
           body?: string
           chat_id?: string
           created_at?: string
@@ -175,6 +280,10 @@ export type Database = {
           id: string
           username: string
         }[]
+      }
+      start_chat_call: {
+        Args: { call_kind: string; target_chat_id: string }
+        Returns: string
       }
       username_available: { Args: { _username: string }; Returns: boolean }
     }
