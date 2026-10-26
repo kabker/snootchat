@@ -27,7 +27,7 @@ export async function fetchMyChats(userId: string): Promise<ChatSummary[]> {
       .in("chat_id", chatIds),
     supabase
       .from("messages")
-      .select("chat_id, body, created_at, sender_id")
+      .select("chat_id, body, created_at, sender_id, attachment_path")
       .in("chat_id", chatIds)
       .order("created_at", { ascending: false }),
   ]);
@@ -47,7 +47,7 @@ export async function fetchMyChats(userId: string): Promise<ChatSummary[]> {
 
   const lastByChat = new Map<string, { body: string; created_at: string; sender_id: string }>();
   (lastMessages ?? []).forEach((m) => {
-    if (!lastByChat.has(m.chat_id)) lastByChat.set(m.chat_id, { body: m.body, created_at: m.created_at, sender_id: m.sender_id });
+    if (!lastByChat.has(m.chat_id)) lastByChat.set(m.chat_id, { body: m.attachment_path ? "Photo" : m.body, created_at: m.created_at, sender_id: m.sender_id });
   });
 
   return memberships

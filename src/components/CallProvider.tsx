@@ -120,6 +120,7 @@ export function CallProvider({ children, userId }: { children: ReactNode; userId
 
   useEffect(() => {
     if (!active || !userId) return;
+    const currentUserId = userId;
     let live = true, syncing = false;
     const version = generation.current;
     const callId = active.call.id;
@@ -141,10 +142,10 @@ export function CallProvider({ children, userId }: { children: ReactNode; userId
           if (peers.current.has(id)) continue;
           const { default: PeerEngine } = await import("simple-peer/simplepeer.min.js");
           if (!live || version !== generation.current || !activeRef.current) return;
-          const peer = new PeerEngine({ initiator: userId.localeCompare(id) < 0, trickle: true, stream: activeRef.current.stream, config: { iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:stun.cloudflare.com:3478"] }] } });
+          const peer = new PeerEngine({ initiator: currentUserId.localeCompare(id) < 0, trickle: true, stream: activeRef.current.stream, config: { iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:stun.cloudflare.com:3478"] }] } });
           peers.current.set(id, peer);
           setTiles(prev => [...prev.filter(t => t.id !== id), { id, name: "Participant", stream: null, connected: false }]);
-          peer.on("signal", signal => { if (live) void supabase.from("call_signals").insert({ call_id: callId, sender_id: userId, recipient_id: id, payload: JSON.parse(JSON.stringify(signal)) }).then(({ error }) => { if (error && live) toast.error("Call connection interrupted. Try calling again."); }); });
+          peer.on("signal", signal => { if (live) void supabase.from("call_signals").insert({ call_id: callId, sender_id: currentUserId, recipient_id: id, payload: JSON.parse(JSON.stringify(signal)) }).then(({ error }) => { if (error && live) toast.error("Call connection interrupted. Try calling again."); }); });
           peer.on("stream", stream => setTiles(prev => prev.map(t => t.id === id ? { ...t, stream, connected: true } : t)));
           peer.on("connect", () => setTiles(prev => prev.map(t => t.id === id ? { ...t, connected: true } : t)));
           peer.on("error", () => { if (live) toast.error("Could not connect this participant. Try another network."); });
@@ -152,7 +153,7 @@ export function CallProvider({ children, userId }: { children: ReactNode; userId
           const { data: profile } = await supabase.from("profiles").select("display_name").eq("id", id).maybeSingle();
           if (live) setTiles(prev => prev.map(t => t.id === id ? { ...t, name: profile?.display_name || "Participant" } : t));
         }
-        const { data: signals } = await supabase.from("call_signals").select("*").eq("call_id", callId).eq("recipient_id", userId).order("created_at");
+        const { data: signals } = await supabase.from("call_signals").select("*").eq("call_id", callId).eq("recipient_id", currentUserId).order("created_at");
         for (const signal of signals ?? []) {
           if (!live || seenSignals.current.has(signal.id)) continue;
           const peer = peers.current.get(signal.sender_id);
@@ -180,7 +181,7 @@ export function CallProvider({ children, userId }: { children: ReactNode; userId
     </div>}
     {active && <div role="dialog" aria-modal="true" aria-label={`${active.call.kind === "video" ? "Video" : "Voice"} call`} className="fixed inset-0 z-50 bg-background flex flex-col">
       <header className="px-5 py-4 border-b border-border flex items-center gap-3"><div className="min-w-0 flex-1"><h2 className="font-semibold truncate">{active.title}</h2><p className="text-sm text-muted-foreground">{tiles.length ? `${tiles.length + 1} participants · ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}` : "Calling…"}</p></div>{!tiles.length && <Loader2 className="size-5 animate-spin text-primary" />}</header>
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 flex items-center justify-center"><div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-5xl"><MediaTile name="You" stream={active.stream} kind={cameraOff ? "voice" : active.call.kind} local connected />{tiles.map(t => <MediaTile key={t.id} {...t} kind={active.call.kind} />)}</div></div>
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 flex items-center justify-center"><div className={`grid grid-cols-1 ${tiles.length ? "sm:grid-cols-2 max-w-5xl" : "max-w-xl"} gap-4 w-full`}><MediaTile name="You" stream={active.stream} kind={cameraOff ? "voice" : active.call.kind} local connected />{tiles.map(t => <MediaTile key={t.id} {...t} kind={active.call.kind} />)}</div></div>
       <footer className="flex justify-center gap-4 p-5 border-t border-border pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <Button variant={muted ? "destructive" : "secondary"} size="icon" className="rounded-full size-12" aria-label={muted ? "Unmute microphone" : "Mute microphone"} title={muted ? "Unmute microphone" : "Mute microphone"} onClick={() => { active.stream.getAudioTracks().forEach(t => { t.enabled = muted; }); setMuted(!muted); }}>{muted ? <MicOff /> : <Mic />}</Button>
         {active.call.kind === "video" && <Button variant="secondary" size="icon" className="rounded-full size-12" aria-label={cameraOff ? "Turn camera on" : "Turn camera off"} title={cameraOff ? "Turn camera on" : "Turn camera off"} onClick={() => { active.stream.getVideoTracks().forEach(t => { t.enabled = cameraOff; }); setCameraOff(!cameraOff); }}>{cameraOff ? <VideoOff /> : <Video />}</Button>}
