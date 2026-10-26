@@ -8,3 +8,7 @@
 - [ ] Add secure call rooms and signaling for accepted chat members.
 - [ ] Add separate voice/video buttons and incoming/group call controls.
 - [ ] Verify calling, permissions, cleanup, and preview errors.
+
+# Image attachments
+- [ ] Add image/GIF-only attachment button, secure storage, and inline display.
+- [ ] Verify upload and image rendering.
