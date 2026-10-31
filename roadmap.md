@@ -5,10 +5,10 @@
 - [x] Check page metadata and preview errors.
 
 # Voice and video calls
-- [ ] Add secure call rooms and signaling for accepted chat members.
-- [ ] Add separate voice/video buttons and incoming/group call controls.
-- [ ] Verify calling, permissions, cleanup, and preview errors.
+- [x] Add secure call rooms and signaling for accepted chat members.
+- [x] Add separate voice/video buttons and incoming/group call controls.
+- [x] Verify calling, permissions, cleanup, and preview errors.
 
 # Image attachments
-- [ ] Add image/GIF-only attachment button, secure storage, and inline display.
-- [ ] Verify upload and image rendering.
+- [x] Add image/GIF-only attachment button, secure storage, and inline display.
+- [x] Verify upload and image rendering.
