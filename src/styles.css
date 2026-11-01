@@ -45,48 +45,48 @@
 }
 
 :root {
-  --radius: 1rem;
+  --radius: 0.875rem;
 
-  /* Messenger-style: clean white surfaces, Messenger blue accent */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.2 0.01 260);
+  /* Apple-style: system grays, iOS blue accent */
+  --background: oklch(0.985 0.002 260);
+  --foreground: oklch(0.18 0 0);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.01 260);
+  --card-foreground: oklch(0.18 0 0);
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.01 260);
+  --popover: oklch(1 0 0 / 0.92);
+  --popover-foreground: oklch(0.18 0 0);
 
-  --primary: oklch(0.62 0.2 254); /* Messenger blue #0084FF */
+  --primary: oklch(0.6 0.2 255); /* iOS blue #007AFF */
   --primary-foreground: oklch(1 0 0);
 
-  --secondary: oklch(0.96 0.003 260);
-  --secondary-foreground: oklch(0.2 0.01 260);
+  --secondary: oklch(0.955 0.003 260);
+  --secondary-foreground: oklch(0.18 0 0);
 
-  --muted: oklch(0.96 0.003 260);
-  --muted-foreground: oklch(0.55 0.01 260);
+  --muted: oklch(0.955 0.003 260);
+  --muted-foreground: oklch(0.56 0.005 260);
 
-  --accent: oklch(0.94 0.03 254);
-  --accent-foreground: oklch(0.45 0.2 254);
+  --accent: oklch(0.93 0.035 255);
+  --accent-foreground: oklch(0.5 0.2 255);
 
-  --destructive: oklch(0.6 0.22 25);
+  --destructive: oklch(0.63 0.23 25);
   --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.92 0.003 260);
-  --input: oklch(0.96 0.003 260);
-  --ring: oklch(0.62 0.2 254);
+  --border: oklch(0.9 0.003 260 / 0.7);
+  --input: oklch(0.94 0.003 260);
+  --ring: oklch(0.6 0.2 255);
 
-  /* Message bubbles */
-  --bubble-blue: oklch(0.62 0.2 254);
+  /* Message bubbles (iMessage-like) */
+  --bubble-blue: oklch(0.6 0.2 255);
   --bubble-blue-foreground: oklch(1 0 0);
-  --bubble-purple: oklch(0.58 0.24 300);
+  --bubble-purple: oklch(0.58 0.22 300);
   --bubble-purple-foreground: oklch(1 0 0);
-  --bubble-black: oklch(0.22 0.01 260);
+  --bubble-black: oklch(0.2 0 0);
   --bubble-black-foreground: oklch(1 0 0);
   --bubble-white: oklch(1 0 0);
-  --bubble-white-foreground: oklch(0.2 0.01 260);
-  --bubble-gray: oklch(0.94 0.003 260);
-  --bubble-gray-foreground: oklch(0.2 0.01 260);
+  --bubble-white-foreground: oklch(0.18 0 0);
+  --bubble-gray: oklch(0.92 0.004 260);
+  --bubble-gray-foreground: oklch(0.18 0 0);
 
   --chart-1: var(--primary);
   --chart-2: oklch(0.6 0.18 250);
@@ -138,8 +138,15 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    letter-spacing: -0.011em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+  h1, h2, h3 { letter-spacing: -0.022em; }
+  nav, header { backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
+  button { transition: transform 0.15s ease, background-color 0.2s ease, opacity 0.2s ease; }
+  button:active:not(:disabled) { transform: scale(0.97); }
   img,
   svg {
     -webkit-user-drag: none;
