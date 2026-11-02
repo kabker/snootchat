@@ -8,6 +8,13 @@
       "when": 1793037049057,
       "tag": "0000_chat_calls_and_image_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793643858603,
+      "tag": "0001_bio_and_username_prefix_search",
+      "breakpoints": true
     }
   ]
 }
