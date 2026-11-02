@@ -71,7 +71,7 @@ function ProfilePage() {
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ display_name: displayName.trim() })
+        .update({ display_name: displayName.trim(), bio: bio.trim().slice(0, 200) })
         .eq("id", userId);
       if (error) return toast.error(error.message);
       toast.success("Profile saved");
@@ -118,6 +118,18 @@ function ProfilePage() {
               onChange={(e) => setDisplayName(e.target.value)}
               className="w-full rounded-lg bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-ring mt-1"
             />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Bio</label>
+            <textarea
+              value={bio}
+              maxLength={200}
+              rows={3}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Tell people a little about yourself"
+              className="w-full resize-none rounded-lg bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-ring mt-1"
+            />
+            <p className="text-right text-xs text-muted-foreground">{bio.length}/200</p>
           </div>
           <Button
             type="submit"
