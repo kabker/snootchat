@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_merge_requests: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          requester_id: string
+          target_email: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          requester_id: string
+          target_email: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          requester_id?: string
+          target_email?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       call_participants: {
         Row: {
           call_id: string
@@ -270,6 +297,10 @@ export type Database = {
           id: string
           username: string
         }[]
+      }
+      merge_accounts: {
+        Args: { _source: string; _target: string }
+        Returns: undefined
       }
       respond_to_invite: {
         Args: { new_status: string; target_chat_id: string }

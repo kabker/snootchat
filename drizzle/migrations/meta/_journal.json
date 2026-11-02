@@ -15,6 +15,13 @@
       "when": 1793643858603,
       "tag": "0001_bio_and_username_prefix_search",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793644365768,
+      "tag": "0002_account_merge_and_inviter_profiles",
+      "breakpoints": true
     }
   ]
 }

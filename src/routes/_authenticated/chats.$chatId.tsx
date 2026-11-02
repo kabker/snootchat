@@ -153,7 +153,7 @@ function ChatThread() {
           setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
           // Mark delivered if it's incoming
           if (msg.sender_id !== userId && !msg.delivered_at) {
-            supabase.from("messages").update({ delivered_at: new Date().toISOString() }).eq("id", msg.id);
+            supabase.from("messages").update({ delivered_at: new Date().toISOString() }).eq("id", msg.id).then(() => {});
           }
         } else if (payload.eventType === "UPDATE") {
           const msg = payload.new as Message;
@@ -176,7 +176,8 @@ function ChatThread() {
       supabase
         .from("messages")
         .update({ delivered_at: new Date().toISOString() })
-        .in("id", undelivered.map((m) => m.id));
+        .in("id", undelivered.map((m) => m.id))
+        .then(() => {});
     }
   }, [messages, userId]);
 
