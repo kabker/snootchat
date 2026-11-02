@@ -70,7 +70,6 @@ function ChatThread() {
   const [showMembers, setShowMembers] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [customBgUrl, setCustomBgUrl] = useState<string | null>(null);
-  useEffect(() => { setShowDetails(window.matchMedia("(min-width: 1100px)").matches); }, []);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const myMembership = members.find((m) => m.user_id === userId);
