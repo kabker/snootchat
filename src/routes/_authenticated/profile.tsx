@@ -25,13 +25,14 @@ function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     supabase
       .from("profiles")
-      .select("username, display_name, avatar_url")
+      .select("username, display_name, avatar_url, bio")
       .eq("id", userId)
       .maybeSingle()
       .then(({ data }) => {
@@ -39,6 +40,7 @@ function ProfilePage() {
           setUsername(data.username);
           setDisplayName(data.display_name);
           setAvatarPath(data.avatar_url);
+          setBio(data.bio ?? "");
         }
         setLoading(false);
       });

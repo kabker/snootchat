@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { Avatar } from "@/components/Avatar";
 import { createDMChat, getProfileByUsername, type ProfileLite } from "@/lib/chats";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/u/$username")({
   component: ProfilePage,
@@ -43,6 +44,13 @@ function ProfilePage() {
     };
   }, [username]);
 
+  const [bio, setBio] = useState("");
+  useEffect(() => {
+    setBio("");
+    if (!profile) return;
+    supabase.from("profiles").select("bio").eq("id", profile.id).maybeSingle().then(({ data }) => setBio(data?.bio ?? ""));
+  }, [profile]);
+
   async function startChat() {
     if (!profile) return;
     setBusy(true);
@@ -77,6 +85,7 @@ function ProfilePage() {
           <Avatar displayName={profile.display_name} avatarPath={profile.avatar_url} size={112} />
           <h2 className="mt-4 text-2xl font-bold">{profile.display_name}</h2>
           <p className="text-muted-foreground">@{profile.username}</p>
+          {bio && <p className="mt-3 max-w-sm whitespace-pre-wrap text-sm">{bio}</p>}
           {profile.id === userId ? (
             <Link to="/settings" className="mt-6 rounded-full border border-border px-5 py-2.5 text-sm font-medium hover:bg-secondary">
               Edit your profile
