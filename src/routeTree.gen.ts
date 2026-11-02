@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as MergeRouteImport } from './routes/merge'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as AuthenticatedChatsRouteImport } from './routes/_authenticated/chats'
@@ -33,6 +34,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MergeRoute = MergeRouteImport.update({
+  id: '/merge',
+  path: '/merge',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -80,6 +86,7 @@ const AuthenticatedUUsernameRoute = AuthenticatedUUsernameRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/merge': typeof MergeRoute
   '/onboarding': typeof OnboardingRoute
   '/verify': typeof VerifyRoute
   '/chats': typeof AuthenticatedChatsRouteWithChildren
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/merge': typeof MergeRoute
   '/onboarding': typeof OnboardingRoute
   '/verify': typeof VerifyRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -105,6 +113,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/merge': typeof MergeRoute
   '/onboarding': typeof OnboardingRoute
   '/verify': typeof VerifyRoute
   '/_authenticated/chats': typeof AuthenticatedChatsRouteWithChildren
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/merge'
     | '/onboarding'
     | '/verify'
     | '/chats'
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/merge'
     | '/onboarding'
     | '/verify'
     | '/profile'
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/merge'
     | '/onboarding'
     | '/verify'
     | '/_authenticated/chats'
@@ -157,6 +169,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  MergeRoute: typeof MergeRoute
   OnboardingRoute: typeof OnboardingRoute
   VerifyRoute: typeof VerifyRoute
 }
@@ -182,6 +195,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merge': {
+      id: '/merge'
+      path: '/merge'
+      fullPath: '/merge'
+      preLoaderRoute: typeof MergeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -277,6 +297,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  MergeRoute: MergeRoute,
   OnboardingRoute: OnboardingRoute,
   VerifyRoute: VerifyRoute,
 }
