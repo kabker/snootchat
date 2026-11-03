@@ -98,7 +98,7 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
           onClick={() => setTab("chats")}
           className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "chats" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"}`}
         >
-          Chats {accepted.length > 0 && `(${accepted.length})`}
+          Chats {directChats.length > 0 && `(${directChats.length})`}
         </Button>
         {groupsTab && <Button variant="ghost"
           onClick={() => setTab("groups")}
