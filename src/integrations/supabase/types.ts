@@ -258,6 +258,7 @@ export type Database = {
           bio: string
           created_at: string
           display_name: string
+          groups_tab: boolean
           id: string
           username: string
         }
@@ -266,6 +267,7 @@ export type Database = {
           bio?: string
           created_at?: string
           display_name: string
+          groups_tab?: boolean
           id: string
           username: string
         }
@@ -274,6 +276,7 @@ export type Database = {
           bio?: string
           created_at?: string
           display_name?: string
+          groups_tab?: boolean
           id?: string
           username?: string
         }

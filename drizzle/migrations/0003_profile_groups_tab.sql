@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS groups_tab boolean NOT NULL DEFAULT true;

@@ -29,13 +29,21 @@ function SettingsPage() {
   const [mergeEmail, setMergeEmail] = useState("");
   const [merging, setMerging] = useState(false);
   const startMerge = useServerFn(startAccountMerge);
-  useEffect(() => { setGroupsTab(localStorage.getItem("snoot-groups-tab") !== "off"); }, []);
+  async function saveGroupsTab(on: boolean) {
+    setGroupsTab(on);
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) return;
+    const { error } = await supabase.from("profiles").update({ groups_tab: on }).eq("id", data.user.id);
+    if (error) { setGroupsTab(!on); toast.error(error.message); }
+  }
 
   useEffect(() => {
     (async () => {
       const { data: userData } = await supabase.auth.getUser();
       const user = userData.user;
       if (!user) return;
+      const { data: prof } = await supabase.from("profiles").select("groups_tab").eq("id", user.id).maybeSingle();
+      if (prof) setGroupsTab(prof.groups_tab);
       // Detect Google-only users: they only have oauth identities, no email/password
       const identities = user.identities ?? [];
       const hasEmailIdentity = identities.some((i) => i.provider === "email");

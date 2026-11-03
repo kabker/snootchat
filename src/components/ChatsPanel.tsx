@@ -18,8 +18,9 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
   const [search, setSearch] = useState("");
   const [groupsTab, setGroupsTab] = useState(true);
   useEffect(() => {
-    setGroupsTab(localStorage.getItem("snoot-groups-tab") !== "off");
-  }, []);
+    supabase.from("profiles").select("groups_tab").eq("id", userId).maybeSingle()
+      .then(({ data }) => { if (data) setGroupsTab(data.groups_tab); });
+  }, [userId]);
 
   async function load() {
     try {
