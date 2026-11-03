@@ -38,7 +38,7 @@ function Landing() {
         SnootChat makes it easy and fun to stay close to your favorite people.
       </p>
       <div className="mt-8 flex flex-col gap-3 w-full max-w-xs">
-        <Link to="/auth" className="rounded-full bg-primary py-3 font-semibold text-primary-foreground hover:opacity-90">
+        <Link to="/auth" search={{ mode: "signup" }} className="rounded-full bg-primary py-3 font-semibold text-primary-foreground hover:opacity-90">
           Get started
         </Link>
         <Link
