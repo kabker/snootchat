@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import logo from "@/assets/snoot-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { signInWithUsername } from "@/lib/signin.functions";
 
 const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() });
 
