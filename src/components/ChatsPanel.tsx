@@ -16,6 +16,10 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [search, setSearch] = useState("");
+  const [groupsTab, setGroupsTab] = useState(true);
+  useEffect(() => {
+    setGroupsTab(localStorage.getItem("snoot-groups-tab") !== "off");
+  }, []);
 
   async function load() {
     try {
@@ -44,7 +48,8 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
   const accepted = chats.filter((c) => c.status === "accepted" && `${c.name ?? ""} ${c.other_members.map((m) => `${m.display_name} ${m.username}`).join(" ")}`.toLowerCase().includes(search.toLowerCase()));
   const pending = chats.filter((c) => c.status === "pending");
   const groupChats = accepted.filter((c) => c.is_group);
-  const visible = tab === "groups" ? groupChats : tab === "requests" ? [] : accepted;
+  const directChats = groupsTab ? accepted.filter((c) => !c.is_group) : accepted;
+  const visible = tab === "groups" && groupsTab ? groupChats : tab === "requests" ? [] : directChats;
 
   async function handleAccept(chatId: string) {
     const { error } = await supabase.rpc("respond_to_invite", {
@@ -93,14 +98,14 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
           onClick={() => setTab("chats")}
           className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "chats" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"}`}
         >
-          Chats {accepted.length > 0 && `(${accepted.length})`}
+          Chats {directChats.length > 0 && `(${directChats.length})`}
         </Button>
-        <Button variant="ghost"
+        {groupsTab && <Button variant="ghost"
           onClick={() => setTab("groups")}
           className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "groups" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"}`}
         >
           Groups {groupChats.length > 0 && `(${groupChats.length})`}
-        </Button>
+        </Button>}
         <Button variant="ghost"
           onClick={() => setTab("requests")}
           className={`flex-1 py-2 rounded-full text-sm font-medium ${tab === "requests" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-secondary"}`}

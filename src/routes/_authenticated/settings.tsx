@@ -5,6 +5,8 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/BottomNav";
+import { useServerFn } from "@tanstack/react-start";
+import { startAccountMerge } from "@/lib/merge.functions";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [
@@ -23,6 +25,11 @@ function SettingsPage() {
   const [hasPassword, setHasPassword] = useState(true);
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
+  const [groupsTab, setGroupsTab] = useState(true);
+  const [mergeEmail, setMergeEmail] = useState("");
+  const [merging, setMerging] = useState(false);
+  const startMerge = useServerFn(startAccountMerge);
+  useEffect(() => { setGroupsTab(localStorage.getItem("snoot-groups-tab") !== "off"); }, []);
 
   useEffect(() => {
     (async () => {
@@ -48,6 +55,25 @@ function SettingsPage() {
       setHasPassword(true);
     } finally {
       setSavingPassword(false);
+    }
+  }
+
+  async function handleMerge(e: React.FormEvent) {
+    e.preventDefault();
+    setMerging(true);
+    try {
+      const { id } = await startMerge({ data: { email: mergeEmail } });
+      const { error } = await supabase.auth.signInWithOtp({
+        email: mergeEmail.trim().toLowerCase(),
+        options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/merge?r=${id}` },
+      });
+      if (error) throw new Error("No SnootChat account uses that email.");
+      toast.success("Check that inbox (and spam) for the confirmation link");
+      setMergeEmail("");
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setMerging(false);
     }
   }
 
@@ -101,6 +127,28 @@ function SettingsPage() {
           >
             {hasPassword ? "Update password" : "Set password"}
           </Button>
+        </form>
+      </section>
+
+      <section className="mt-6 border-b border-border pb-6">
+        <label className="flex items-center justify-between gap-4">
+          <span>
+            <span className="block font-semibold">Groups tab</span>
+            <span className="block text-xs text-muted-foreground">On: group chats live in their own tab. Off: they show in Chats.</span>
+          </span>
+          <input type="checkbox" role="switch" aria-label="Groups tab" checked={groupsTab}
+            onChange={(e) => { setGroupsTab(e.target.checked); localStorage.setItem("snoot-groups-tab", e.target.checked ? "on" : "off"); }}
+            className="size-5 accent-primary" />
+        </label>
+      </section>
+
+      <section className="mt-6 border-b border-border pb-8">
+        <h2 className="font-semibold mb-1">Merge accounts</h2>
+        <p className="text-xs text-muted-foreground mb-4">Enter the email of your other SnootChat account. We'll email it a link to confirm the merge and pick which account keeps everything.</p>
+        <form onSubmit={handleMerge} className="space-y-3">
+          <input type="email" value={mergeEmail} onChange={(e) => setMergeEmail(e.target.value)} placeholder="Other account's email"
+            className="w-full rounded-lg bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-ring" required />
+          <Button type="submit" disabled={merging} className="rounded-full px-5 py-2.5 font-medium">{merging ? "Sending…" : "Send confirmation email"}</Button>
         </form>
       </section>
 
