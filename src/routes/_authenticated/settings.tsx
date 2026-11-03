@@ -145,7 +145,7 @@ function SettingsPage() {
             <span className="block text-xs text-muted-foreground">On: group chats live in their own tab. Off: they show in Chats.</span>
           </span>
           <input type="checkbox" role="switch" aria-label="Groups tab" checked={groupsTab}
-            onChange={(e) => { setGroupsTab(e.target.checked); localStorage.setItem("snoot-groups-tab", e.target.checked ? "on" : "off"); }}
+            onChange={(e) => void saveGroupsTab(e.target.checked)}
             className="size-5 accent-primary" />
         </label>
       </section>
