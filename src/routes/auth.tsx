@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import logo from "@/assets/snoot-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { signInWithUsername } from "@/lib/signin.functions";
 
 const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() });
 
@@ -83,11 +84,20 @@ function AuthPage() {
         toast.success("Check your email to verify your account");
         navigate({ to: "/verify", search: { email } });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const id = email.trim();
+        if (!id.includes("@")) {
+          const res = await signInWithUsername({ data: { username: id.replace(/^@/, ""), password } });
+          if ("error" in res) return toast.error(res.error);
+          const { error } = await supabase.auth.setSession(res);
+          if (error) return toast.error(error.message);
+          navigate({ to: "/" });
+          return;
+        }
+        const { error } = await supabase.auth.signInWithPassword({ email: id, password });
         if (error) {
           if (error.message.toLowerCase().includes("confirm")) {
             toast.error("Please verify your email first");
-            navigate({ to: "/verify", search: { email } });
+            navigate({ to: "/verify", search: { email: id } });
             return;
           }
           return toast.error(error.message);
