@@ -48,6 +48,7 @@ type Message = {
   body: string;
   created_at: string;
   delivered_at: string | null;
+  read_at?: string | null;
   attachment_path: string | null;
 };
 
@@ -169,7 +170,42 @@ function ChatThread() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId, userId]);
 
-  // Mark delivered on load
+  // Typing indicator (broadcast)
+  const [typingIds, setTypingIds] = useState<string[]>([]);
+  const typingChannel = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const lastTypingSent = useRef(0);
+  useEffect(() => {
+    const timers = new Map<string, ReturnType<typeof setTimeout>>();
+    const ch = supabase.channel(`typing:${chatId}`, { config: { broadcast: { self: false } } });
+    ch.on("broadcast", { event: "typing" }, ({ payload }) => {
+      const id = payload?.user_id as string | undefined;
+      if (!id || id === userId) return;
+      const stop = payload?.typing === false;
+      clearTimeout(timers.get(id));
+      if (stop) {
+        setTypingIds((p) => p.filter((x) => x !== id));
+        return;
+      }
+      setTypingIds((p) => (p.includes(id) ? p : [...p, id]));
+      timers.set(id, setTimeout(() => setTypingIds((p) => p.filter((x) => x !== id)), 4000));
+    }).subscribe();
+    typingChannel.current = ch;
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+      setTypingIds([]);
+      typingChannel.current = null;
+      supabase.removeChannel(ch);
+    };
+  }, [chatId, userId]);
+
+  function sendTyping(typing: boolean) {
+    const now = Date.now();
+    if (typing && now - lastTypingSent.current < 2000) return;
+    lastTypingSent.current = typing ? now : 0;
+    typingChannel.current?.send({ type: "broadcast", event: "typing", payload: { user_id: userId, typing } });
+  }
+
+  // Mark delivered on load, and seen while the chat is visible
   useEffect(() => {
     const undelivered = messages.filter((m) => m.sender_id !== userId && !m.delivered_at);
     if (undelivered.length > 0) {
@@ -179,6 +215,21 @@ function ChatThread() {
         .in("id", undelivered.map((m) => m.id))
         .then(() => {});
     }
+    const markSeen = () => {
+      if (document.visibilityState !== "visible") return;
+      const unseen = messages.filter((m) => m.sender_id !== userId && !m.read_at);
+      if (unseen.length === 0) return;
+      const now = new Date().toISOString();
+      supabase
+        .from("messages")
+        .update({ read_at: now, delivered_at: now })
+        .in("id", unseen.map((m) => m.id))
+        .is("read_at", null)
+        .then(() => {});
+    };
+    markSeen();
+    document.addEventListener("visibilitychange", markSeen);
+    return () => document.removeEventListener("visibilitychange", markSeen);
   }, [messages, userId]);
 
   useEffect(() => {
@@ -388,13 +439,31 @@ function ChatThread() {
                   {mine && (
                     <span className="self-end text-[10px] text-muted-foreground bg-background/80 rounded-full px-1.5 flex items-center gap-0.5">
                       {m.delivered_at ? <CheckCheck className="w-3 h-3" /> : <Check className="w-3 h-3" />}
-                      {m.delivered_at ? "Delivered" : "Sent"}
+                      {m.read_at ? "Seen" : m.delivered_at ? "Delivered" : "Sent"}
+                      {m.read_at && <span role="img" aria-label="Seen">👀</span>}
                     </span>
                   )}
                 </div>
               </div>
             );
           })}
+          {typingIds.length > 0 && (
+            <div className="flex justify-start">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[11px] text-foreground bg-background/80 rounded-full px-2 self-start">
+                  {typingIds
+                    .map((id) => members.find((x) => x.user_id === id)?.profile.display_name ?? "Someone")
+                    .join(", ")}{" "}
+                  {typingIds.length > 1 ? "are" : "is"} typing
+                </span>
+                <div className="px-4 py-3 rounded-2xl bg-bubble-gray text-bubble-gray-foreground flex gap-1" aria-label="Typing">
+                  {[0, 150, 300].map((d) => (
+                    <span key={d} className="size-2 rounded-full bg-current opacity-60 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -411,7 +480,11 @@ function ChatThread() {
           <textarea
             aria-label="Message"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              sendTyping(e.target.value.trim().length > 0);
+            }}
+            onBlur={() => sendTyping(false)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
