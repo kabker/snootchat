@@ -1,0 +1,2 @@
+COMMENT ON TABLE public.account_merge_requests IS 'DEPRECATED: account merging was removed from the app; table kept for historical data only.';
+COMMENT ON FUNCTION public.merge_accounts(uuid, uuid) IS 'DEPRECATED: account merging was removed from the app; no longer called by the app.';

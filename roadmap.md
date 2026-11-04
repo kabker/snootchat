@@ -12,3 +12,7 @@
 # Image attachments
 - [x] Add image/GIF-only attachment button, secure storage, and inline display.
 - [x] Verify upload and image rendering.
+
+# Settings cleanup
+- [x] Remove account merging from Settings, delete merge page and server functions, mark merge data deprecated.
+- [x] Make the Groups tab switch a filled circle when on and an unfilled circle when off, and verify it saves.
