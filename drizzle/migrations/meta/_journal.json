@@ -36,6 +36,13 @@
       "when": 1793808965888,
       "tag": "0004_deprecate_account_merge",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793809249536,
+      "tag": "0005_message_read_at",
+      "breakpoints": true
     }
   ]
 }
