@@ -3,6 +3,7 @@ import logo from "@/assets/snoot-logo.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "SnootChat — Chat with friends" },
@@ -14,17 +15,15 @@ export const Route = createFileRoute("/")({
     ],
   }),
   beforeLoad: async () => {
-    if (typeof window === "undefined") return;
-    const { data } = await supabase.auth.getSession();
-    if (data.session) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", data.session.user.id)
-        .maybeSingle();
-      if (!profile) throw redirect({ to: "/onboarding" });
-      throw redirect({ to: "/chats" });
-    }
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    if (!profile) throw redirect({ to: "/onboarding" });
+    throw redirect({ to: "/chats" });
   },
   component: Landing,
 });
