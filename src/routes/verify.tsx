@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import logo from "@/assets/snoot-logo.png";
+import logo from "@/assets/snoot-logo.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 
 const searchSchema = z.object({ email: z.string().email().optional() });
@@ -92,7 +92,7 @@ function VerifyPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md bg-card rounded-3xl border border-border p-8 shadow-2xl text-center">
         <div className="flex flex-col items-center mb-6">
-          <img src={logo} alt="" draggable={false} className="w-16 h-16 object-contain" width={512} height={512} />
+          <img src={logo.url} alt="" draggable={false} className="w-16 h-16 object-contain" width={512} height={512} />
           <h1 className="mt-3 text-2xl font-bold">Check your email</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             We sent a verification link to{" "}

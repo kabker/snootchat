@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchMyChats, createDMChat, createGroupChat, type ChatSummary, type ProfileLite } from "@/lib/chats";
 import { UserSearch } from "@/components/UserSearch";
 import { Avatar } from "@/components/Avatar";
-import logo from "@/assets/snoot-logo.png";
+import logo from "@/assets/snoot-logo.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { Search, SquarePen, Users, X } from "lucide-react";
 
@@ -199,7 +199,7 @@ function ChatRow({ chat, active, onOpen }: { chat: ChatSummary; active: boolean;
 function EmptyState({ onNew, isGroups }: { onNew: () => void; isGroups?: boolean }) {
   return (
     <div className="text-center py-16">
-      {!isGroups && <img src={logo} alt="" draggable={false} className="w-20 h-20 mx-auto opacity-70 object-contain" width={512} height={512} />}
+      {!isGroups && <img src={logo.url} alt="" draggable={false} className="w-20 h-20 mx-auto opacity-70 object-contain" width={512} height={512} />}
       <p className="mt-4 text-muted-foreground">{isGroups ? "No group chats yet. Create one to bring people together." : "No chats yet. Send a request to start one."}</p>
       <Button onClick={onNew} className="mt-4 rounded-full bg-primary text-primary-foreground px-5 py-2.5 font-medium">
         New chat
