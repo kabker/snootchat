@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -10,7 +10,19 @@ import { signInWithUsername } from "@/lib/signin.functions";
 const searchSchema = z.object({ mode: z.enum(["signin", "signup"]).optional() });
 
 export const Route = createFileRoute("/auth")({
+  ssr: false,
   validateSearch: (s) => searchSchema.parse(s),
+  beforeLoad: async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    if (!profile) throw redirect({ to: "/onboarding" });
+    throw redirect({ to: "/chats" });
+  },
   head: () => ({ meta: [
     { title: "Sign in or join · SnootChat" },
     { name: "description", content: "Sign in or create a SnootChat account to connect with friends." },
