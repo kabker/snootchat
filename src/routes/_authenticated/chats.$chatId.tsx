@@ -249,6 +249,7 @@ function ChatThread() {
   async function sendMessage() {
     const text = input.trim();
     if (!text || !myMembership || myMembership.status !== "accepted") return;
+    sendTyping(false);
     setInput("");
     const { error } = await supabase.from("messages").insert({
       chat_id: chatId,
