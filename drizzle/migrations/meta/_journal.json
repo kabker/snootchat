@@ -29,6 +29,13 @@
       "when": 1793737800564,
       "tag": "0003_profile_groups_tab",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793808965888,
+      "tag": "0004_deprecate_account_merge",
+      "breakpoints": true
     }
   ]
 }
