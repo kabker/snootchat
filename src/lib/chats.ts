@@ -13,7 +13,7 @@ export type ChatSummary = {
 export async function fetchMyChats(userId: string): Promise<ChatSummary[]> {
   const { data: memberships, error } = await supabase
     .from("chat_members")
-    .select("chat_id, status, chats!inner(id, is_group, name, updated_at)")
+    .select("chat_id, status, chats!inner(id, is_group, name, updated_at, icon_path)")
     .eq("user_id", userId);
   if (error) throw error;
   if (!memberships || memberships.length === 0) return [];
