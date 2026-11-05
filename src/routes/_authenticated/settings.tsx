@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/BottomNav";
 import { cn } from "@/lib/utils";
+import { deleteMyAccount } from "@/lib/account.functions";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [
@@ -59,6 +61,20 @@ function SettingsPage() {
       setHasPassword(true);
     } finally {
       setSavingPassword(false);
+    }
+  }
+
+  const [deleting, setDeleting] = useState(false);
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await deleteMyAccount();
+      await supabase.auth.signOut();
+      toast.success("Your account was deleted");
+      navigate({ to: "/auth", replace: true });
+    } catch (e) {
+      toast.error((e as Error).message);
+      setDeleting(false);
     }
   }
 
@@ -137,6 +153,21 @@ function SettingsPage() {
         >
           Sign out
         </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" disabled={deleting} className="w-full mt-3 rounded-lg py-3 font-semibold text-destructive">Delete account</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+              <AlertDialogDescription>This permanently removes your profile, messages, and chats. It can't be undone.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => void handleDelete()} className="bg-destructive text-destructive-foreground">Delete forever</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </section>
       <BottomNav />
     </div>

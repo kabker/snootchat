@@ -4,6 +4,7 @@ export type ChatSummary = {
   chat_id: string;
   is_group: boolean;
   name: string | null;
+  icon_path?: string | null;
   updated_at: string;
   status: "pending" | "accepted" | "declined";
   other_members: { id: string; username: string; display_name: string; avatar_url: string | null }[];
@@ -13,7 +14,7 @@ export type ChatSummary = {
 export async function fetchMyChats(userId: string): Promise<ChatSummary[]> {
   const { data: memberships, error } = await supabase
     .from("chat_members")
-    .select("chat_id, status, chats!inner(id, is_group, name, updated_at)")
+    .select("chat_id, status, chats!inner(id, is_group, name, updated_at, icon_path)")
     .eq("user_id", userId);
   if (error) throw error;
   if (!memberships || memberships.length === 0) return [];
@@ -52,7 +53,7 @@ export async function fetchMyChats(userId: string): Promise<ChatSummary[]> {
 
   return memberships
     .map((m) => {
-      const chat = m.chats as unknown as { id: string; is_group: boolean; name: string | null; updated_at: string };
+      const chat = m.chats as unknown as { id: string; is_group: boolean; name: string | null; updated_at: string; icon_path: string | null };
       const others = (allMembers ?? [])
         .filter((am) => am.chat_id === m.chat_id && am.user_id !== userId)
         .map((am) => {
@@ -68,6 +69,7 @@ export async function fetchMyChats(userId: string): Promise<ChatSummary[]> {
         chat_id: m.chat_id,
         is_group: chat.is_group,
         name: chat.name,
+        icon_path: chat.icon_path,
         updated_at: chat.updated_at,
         status: m.status as ChatSummary["status"],
         other_members: others,

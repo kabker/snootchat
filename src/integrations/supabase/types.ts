@@ -187,6 +187,8 @@ export type Database = {
           background_value: string
           created_at: string
           created_by: string
+          description: string
+          icon_path: string | null
           id: string
           is_group: boolean
           name: string | null
@@ -197,6 +199,8 @@ export type Database = {
           background_value?: string
           created_at?: string
           created_by: string
+          description?: string
+          icon_path?: string | null
           id?: string
           is_group?: boolean
           name?: string | null
@@ -207,6 +211,8 @@ export type Database = {
           background_value?: string
           created_at?: string
           created_by?: string
+          description?: string
+          icon_path?: string | null
           id?: string
           is_group?: boolean
           name?: string | null
@@ -254,6 +260,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nicknames: {
+        Row: {
+          nickname: string
+          owner_id: string
+          target_id: string
+          updated_at: string
+        }
+        Insert: {
+          nickname: string
+          owner_id?: string
+          target_id: string
+          updated_at?: string
+        }
+        Update: {
+          nickname?: string
+          owner_id?: string
+          target_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

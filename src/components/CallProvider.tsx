@@ -13,16 +13,27 @@ type Active = { call: Call; title: string; stream: MediaStream };
 const CallContext = createContext<{ startCall: (chatId: string, kind: CallKind) => Promise<void>; busy: boolean }>({ startCall: async () => {}, busy: false });
 export const useCalls = () => useContext(CallContext);
 
+// Remote audio plays through its own always-mounted element so re-renders and hidden video never interrupt it.
+function RemoteAudio({ stream }: { stream: MediaStream | null }) {
+  const ref = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !stream) return;
+    if (el.srcObject !== stream) el.srcObject = stream;
+    void el.play().catch(() => {});
+  }, [stream]);
+  return <audio ref={ref} autoPlay playsInline className="hidden" />;
+}
+
 function MediaTile({ stream, name, local, kind, connected }: { stream: MediaStream | null; name: string; local?: boolean; kind: CallKind; connected: boolean }) {
   const video = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     if (!video.current) return;
-    video.current.srcObject = stream;
+    if (video.current.srcObject !== stream) video.current.srcObject = stream;
     void video.current.play().catch(() => {});
-    return () => { if (video.current) video.current.srcObject = null; };
   }, [stream]);
   return <div className="relative aspect-video min-w-0 rounded-lg bg-secondary overflow-hidden flex flex-col items-center justify-center gap-3">
-    <video ref={video} autoPlay playsInline muted={local} className={kind === "video" && stream ? "absolute inset-0 w-full h-full object-cover" : "hidden"} />
+    <video ref={video} autoPlay playsInline muted className={kind === "video" && stream ? "absolute inset-0 w-full h-full object-cover" : "hidden"} />
     {(!stream || kind === "voice") && <><Avatar displayName={name} size={64} /><p className="max-w-full px-3 truncate text-sm">{connected ? name : "Connecting…"}</p></>}
     <span className="absolute bottom-2 left-2 max-w-[90%] truncate rounded-md bg-background/90 px-2 py-1 text-xs">{name}{local ? " (You)" : ""}</span>
   </div>;
@@ -146,7 +157,7 @@ export function CallProvider({ children, userId }: { children: ReactNode; userId
           peers.current.set(id, peer);
           setTiles(prev => [...prev.filter(t => t.id !== id), { id, name: "Participant", stream: null, connected: false }]);
           peer.on("signal", signal => { if (live) void supabase.from("call_signals").insert({ call_id: callId, sender_id: currentUserId, recipient_id: id, payload: JSON.parse(JSON.stringify(signal)) }).then(({ error }) => { if (error && live) toast.error("Call connection interrupted. Try calling again."); }); });
-          peer.on("stream", stream => setTiles(prev => prev.map(t => t.id === id ? { ...t, stream, connected: true } : t)));
+          peer.on("stream", stream => setTiles(prev => prev.map(t => t.id === id ? (t.stream === stream ? t : { ...t, stream, connected: true }) : t)));
           peer.on("connect", () => setTiles(prev => prev.map(t => t.id === id ? { ...t, connected: true } : t)));
           peer.on("error", () => { if (live) toast.error("Could not connect this participant. Try another network."); });
           peer.on("close", () => { if (live) setTiles(prev => prev.map(t => t.id === id ? { ...t, connected: false, stream: null } : t)); });
@@ -181,7 +192,7 @@ export function CallProvider({ children, userId }: { children: ReactNode; userId
     </div>}
     {active && <div role="dialog" aria-modal="true" aria-label={`${active.call.kind === "video" ? "Video" : "Voice"} call`} className="fixed inset-0 z-50 bg-background flex flex-col">
       <header className="px-5 py-4 border-b border-border flex items-center gap-3"><div className="min-w-0 flex-1"><h2 className="font-semibold truncate">{active.title}</h2><p className="text-sm text-muted-foreground">{tiles.length ? `${tiles.length + 1} participants · ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}` : "Calling…"}</p></div>{!tiles.length && <Loader2 className="size-5 animate-spin text-primary" />}</header>
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 flex items-center justify-center"><div className={`grid grid-cols-1 ${tiles.length ? "sm:grid-cols-2 max-w-5xl" : "max-w-xl"} gap-4 w-full`}><MediaTile name="You" stream={active.stream} kind={cameraOff ? "voice" : active.call.kind} local connected />{tiles.map(t => <MediaTile key={t.id} {...t} kind={active.call.kind} />)}</div></div>
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 flex items-center justify-center"><div className={`grid grid-cols-1 ${tiles.length ? "sm:grid-cols-2 max-w-5xl" : "max-w-xl"} gap-4 w-full`}><MediaTile name="You" stream={active.stream} kind={cameraOff ? "voice" : active.call.kind} local connected />{tiles.map(t => <MediaTile key={t.id} {...t} kind={active.call.kind} />)}{tiles.map(t => <RemoteAudio key={`a-${t.id}`} stream={t.stream} />)}</div></div>
       <footer className="flex justify-center gap-4 p-5 border-t border-border pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <Button variant={muted ? "destructive" : "secondary"} size="icon" className="rounded-full size-12" aria-label={muted ? "Unmute microphone" : "Mute microphone"} title={muted ? "Unmute microphone" : "Mute microphone"} onClick={() => { active.stream.getAudioTracks().forEach(t => { t.enabled = muted; }); setMuted(!muted); }}>{muted ? <MicOff /> : <Mic />}</Button>
         {active.call.kind === "video" && <Button variant="secondary" size="icon" className="rounded-full size-12" aria-label={cameraOff ? "Turn camera on" : "Turn camera off"} title={cameraOff ? "Turn camera on" : "Turn camera off"} onClick={() => { active.stream.getVideoTracks().forEach(t => { t.enabled = cameraOff; }); setCameraOff(!cameraOff); }}>{cameraOff ? <VideoOff /> : <Video />}</Button>}

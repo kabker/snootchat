@@ -7,10 +7,12 @@ export function Avatar({
   displayName,
   avatarPath,
   size = 40,
+  bucket = "avatars",
 }: {
   displayName: string;
   avatarPath?: string | null;
   size?: number;
+  bucket?: string;
 }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -19,13 +21,13 @@ export function Avatar({
       setUrl(null);
       return;
     }
-    resolveStorageUrl(avatarPath, "avatars").then((u) => {
+    resolveStorageUrl(avatarPath, bucket).then((u) => {
       if (!cancelled) setUrl(u);
     });
     return () => {
       cancelled = true;
     };
-  }, [avatarPath]);
+  }, [avatarPath, bucket]);
 
   const initials = initialsOf(displayName);
   const bg = colorFromString(displayName);

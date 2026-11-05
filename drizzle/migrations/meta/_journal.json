@@ -43,6 +43,13 @@
       "when": 1793809249536,
       "tag": "0005_message_read_at",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793895266151,
+      "tag": "0006_group_details_and_nicknames",
+      "breakpoints": true
     }
   ]
 }

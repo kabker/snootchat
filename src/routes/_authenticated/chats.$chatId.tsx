@@ -11,6 +11,8 @@ import { UserSearch } from "@/components/UserSearch";
 import { Button } from "@/components/ui/button";
 import { useCalls } from "@/components/CallProvider";
 import { MessageImage } from "@/components/MessageImage";
+import { ImageCropper } from "@/components/ImageCropper";
+import { useNicknames, saveNickname } from "@/lib/nicknames";
 import { canCall, imageExtension } from "@/lib/call-rules";
 
 export const Route = createFileRoute("/_authenticated/chats/$chatId")({
@@ -32,6 +34,8 @@ type Chat = {
   background_type: string;
   background_value: string;
   created_by: string;
+  description: string;
+  icon_path: string | null;
 };
 type Member = {
   chat_id: string;
@@ -72,6 +76,31 @@ function ChatThread() {
   const [showDetails, setShowDetails] = useState(false);
   const [customBgUrl, setCustomBgUrl] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const nicknames = useNicknames();
+  const nameOf = (p?: { id: string; display_name: string }) => (p ? nicknames.get(p.id) || p.display_name : undefined);
+  const [iconFile, setIconFile] = useState<File | null>(null);
+  const [groupName, setGroupName] = useState("");
+  const [groupDesc, setGroupDesc] = useState("");
+  useEffect(() => { setGroupName(chat?.name ?? ""); setGroupDesc(chat?.description ?? ""); }, [chat?.id, chat?.name, chat?.description]);
+  async function saveGroupInfo(e: React.FormEvent) {
+    e.preventDefault();
+    if (!groupName.trim()) { toast.error("Group name is required"); return; }
+    const { error } = await supabase.from("chats").update({ name: groupName.trim().slice(0, 60), description: groupDesc.trim().slice(0, 300) }).eq("id", chatId);
+    if (error) { toast.error(error.message); return; }
+    setChat((c) => (c ? { ...c, name: groupName.trim().slice(0, 60), description: groupDesc.trim().slice(0, 300) } : c));
+    toast.success("Group updated");
+  }
+  async function uploadGroupIcon(file: File) {
+    setIconFile(null);
+    try {
+      const path = `${chatId}/icon-${Date.now()}.jpg`;
+      await uploadFile("chat-backgrounds", path, file);
+      const { error } = await supabase.from("chats").update({ icon_path: path }).eq("id", chatId);
+      if (error) throw error;
+      setChat((c) => (c ? { ...c, icon_path: path } : c));
+      toast.success("Group photo updated");
+    } catch (err) { toast.error((err as Error).message); }
+  }
 
   const myMembership = members.find((m) => m.user_id === userId);
   const others = members.filter((m) => m.user_id !== userId);
@@ -358,7 +387,7 @@ function ChatThread() {
 
   const title = chat.is_group
     ? chat.name ?? "Group chat"
-    : others[0]?.profile.display_name ?? "Chat";
+    : nameOf(others[0]?.profile) ?? "Chat";
 
   return (
     <div className="h-full flex relative">
@@ -367,7 +396,9 @@ function ChatThread() {
         <Button variant="ghost" size="icon" aria-label="Back to chats" onClick={() => navigate({ to: "/chats" })} className="rounded-full md:hidden">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        {chat.is_group ? (
+        {chat.is_group && chat.icon_path ? (
+          <Avatar displayName={title} avatarPath={chat.icon_path} bucket="chat-backgrounds" size={40} />
+        ) : chat.is_group ? (
           <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Users className="w-5 h-5" /></div>
         ) : others[0] ? (
           <Link to="/u/$username" params={{ username: others[0].profile.username }}>
@@ -425,7 +456,7 @@ function ChatThread() {
               <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div className="max-w-[75%] flex flex-col gap-0.5">
                   {chat.is_group && !mine && sender && (
-                    <span className="text-[11px] text-foreground bg-background/80 rounded-full px-2 self-start">{sender.profile.display_name}</span>
+                    <span className="text-[11px] text-foreground bg-background/80 rounded-full px-2 self-start">{nameOf(sender.profile)}</span>
                   )}
                   {m.attachment_path && <MessageImage path={m.attachment_path} />}
                   {m.body && <div
@@ -512,17 +543,30 @@ function ChatThread() {
     {showDetails && <aside aria-label="Chat details panel" className="absolute inset-0 z-20 bg-background lg:static lg:w-64 xl:w-72 shrink-0 border-l border-border overflow-y-auto p-5">
       <div className="flex justify-end"><Button variant="ghost" size="icon" aria-label="Close chat details" onClick={() => setShowDetails(false)}><X /></Button></div>
       <div className="flex flex-col items-center text-center pt-4 pb-8">
-        {chat.is_group ? <div className="size-20 rounded-full bg-secondary flex items-center justify-center"><Users className="size-9" /></div> : <Avatar displayName={title} avatarPath={others[0]?.profile.avatar_url} size={80} />}
+        {chat.is_group && chat.icon_path ? <Avatar displayName={title} avatarPath={chat.icon_path} bucket="chat-backgrounds" size={80} /> : chat.is_group ? <div className="size-20 rounded-full bg-secondary flex items-center justify-center"><Users className="size-9" /></div> : <Avatar displayName={title} avatarPath={others[0]?.profile.avatar_url} size={80} />}
         <h2 className="font-bold mt-4 break-words w-full">{title}</h2>
         {!chat.is_group && <p className="text-sm text-muted-foreground break-all">@{others[0]?.profile.username}</p>}
+        {chat.is_group && chat.description && <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap break-words w-full">{chat.description}</p>}
         {!chat.is_group && others[0] && <Button asChild variant="secondary" size="icon" className="rounded-full mt-4"><Link to="/u/$username" params={{ username: others[0].profile.username }} title="View profile" aria-label="View profile"><UserRound /></Link></Button>}
       </div>
+      {chat.is_group && myMembership.status === "accepted" && <form onSubmit={saveGroupInfo} className="mb-6 space-y-2">
+        <h3 className="text-sm font-semibold">Group info</h3>
+        <label className="flex cursor-pointer items-center justify-center rounded-lg bg-secondary px-3 py-2 text-sm font-medium text-primary">
+          Change group photo
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) setIconFile(f); }} />
+        </label>
+        <input value={groupName} onChange={(e) => setGroupName(e.target.value)} maxLength={60} placeholder="Group name" aria-label="Group name" className="w-full rounded-lg bg-input px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+        <textarea value={groupDesc} onChange={(e) => setGroupDesc(e.target.value)} maxLength={300} rows={3} placeholder="Description" aria-label="Group description" className="w-full resize-none rounded-lg bg-input px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+        <Button type="submit" size="sm" className="w-full">Save</Button>
+      </form>}
+      {!chat.is_group && others[0] && <div className="mb-6"><h3 className="text-sm font-semibold mb-2">Nickname</h3><NicknameField ownerId={userId} target={others[0].profile} current={nicknames.get(others[0].user_id) ?? ""} /></div>}
       <h3 className="text-sm font-semibold mb-3">Customize chat</h3>
       <Button variant="ghost" onClick={() => setShowBubble(true)} className="w-full justify-start h-12"><Palette /> Bubble color <ChevronRight className="ml-auto" /></Button>
       <Button variant="ghost" onClick={() => setShowBg(true)} className="w-full justify-start h-12"><ImageIcon /> Background <ChevronRight className="ml-auto" /></Button>
       {chat.is_group && <Button variant="ghost" onClick={() => setShowMembers(true)} className="w-full justify-start h-12"><Users /> Members <ChevronRight className="ml-auto" /></Button>}
     </aside>}
 
+      {iconFile && <ImageCropper file={iconFile} onCancel={() => setIconFile(null)} onDone={(f) => void uploadGroupIcon(f)} />}
       {showBubble && (
         <Sheet onClose={() => setShowBubble(false)} title="Your bubble color">
           <div className="grid grid-cols-4 gap-3 mt-4">
@@ -572,14 +616,15 @@ function ChatThread() {
                   params={{ username: m.profile.username }}
                   className="flex items-center gap-3 flex-1 min-w-0"
                 >
-                  <Avatar displayName={m.profile.display_name} avatarPath={m.profile.avatar_url} size={36} />
+                  <Avatar displayName={nameOf(m.profile)} avatarPath={m.profile.avatar_url} size={36} />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{m.profile.display_name}</p>
+                    <p className="text-sm font-medium truncate">{nameOf(m.profile)}</p>
                     <p className="text-xs text-muted-foreground truncate">@{m.profile.username} · {m.status}</p>
                   </div>
                 </Link>
                 {m.role === "owner" && <span className="text-[10px] uppercase text-primary">Owner</span>}
               </li>
+              {m.user_id !== userId && <li key={`n-${m.user_id}`} className="pl-12 pb-2"><NicknameField ownerId={userId} target={m.profile} current={nicknames.get(m.user_id) ?? ""} /></li>}
             ))}
           </ul>
           <div className="mt-4">
@@ -609,3 +654,20 @@ function Sheet({ children, onClose, title }: { children: React.ReactNode; onClos
   );
 }
 
+
+function NicknameField({ ownerId, target, current }: { ownerId: string; target: { id: string; display_name: string }; current: string }) {
+  const [value, setValue] = useState(current);
+  useEffect(() => setValue(current), [current]);
+  if (ownerId === target.id) return null;
+  return (
+    <form className="flex gap-2" onSubmit={async (e) => {
+      e.preventDefault();
+      try { await saveNickname(ownerId, target.id, value); toast.success(value.trim() ? "Nickname saved" : "Nickname removed"); }
+      catch (err) { toast.error((err as Error).message); }
+    }}>
+      <input value={value} onChange={(e) => setValue(e.target.value)} maxLength={40} placeholder={`Nickname for ${target.display_name}`} aria-label={`Nickname for ${target.display_name}`}
+        className="min-w-0 flex-1 rounded-lg bg-input px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring" />
+      <Button type="submit" size="sm" variant="secondary">Save</Button>
+    </form>
+  );
+}

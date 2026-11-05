@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadFile } from "@/lib/storage";
 import { Avatar } from "@/components/Avatar";
+import { ImageCropper } from "@/components/ImageCropper";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({ meta: [
@@ -45,8 +46,14 @@ function Onboarding() {
     });
   }, [navigate]);
 
-  async function handleAvatar(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  function pickAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (f) setCropFile(f);
+  }
+  async function handleAvatar(file: File) {
+    setCropFile(null);
     if (!file || !userId) return;
     try {
       const path = `${userId}/${Date.now()}-${file.name}`;
@@ -88,6 +95,7 @@ function Onboarding() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      {cropFile && <ImageCropper file={cropFile} onCancel={() => setCropFile(null)} onDone={(f) => void handleAvatar(f)} />}
       <form onSubmit={handleSave} className="w-full max-w-md bg-card rounded-3xl border border-border p-8">
         <h1 className="text-2xl font-bold mb-1">Set up your snoot</h1>
         <p className="text-sm text-muted-foreground mb-6">Choose how others will see you.</p>
@@ -96,7 +104,7 @@ function Onboarding() {
           <Avatar displayName={displayName || "?"} avatarPath={avatarPath} size={64} />
           <label className="cursor-pointer rounded-full border border-border px-4 py-2 text-sm hover:bg-secondary">
             Upload photo
-            <input type="file" accept="image/*" className="hidden" onChange={handleAvatar} />
+            <input type="file" accept="image/*" className="hidden" onChange={pickAvatar} />
           </label>
         </div>
 
