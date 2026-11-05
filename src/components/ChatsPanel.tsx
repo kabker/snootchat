@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchMyChats, createDMChat, createGroupChat, type ChatSummary, type ProfileLite } from "@/lib/chats";
 import { UserSearch } from "@/components/UserSearch";
 import { Avatar } from "@/components/Avatar";
+import { useNicknames } from "@/lib/nicknames";
 import logo from "@/assets/snoot-logo.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { Search, SquarePen, Users, X } from "lucide-react";
@@ -174,12 +175,16 @@ export function ChatsPanel({ userId, activeChatId }: { userId: string; activeCha
 }
 
 function ChatRow({ chat, active, onOpen }: { chat: ChatSummary; active: boolean; onOpen: () => void }) {
-  const title = chat.is_group ? chat.name ?? "Group chat" : chat.other_members[0]?.display_name ?? "Chat";
+  const nicknames = useNicknames();
+  const other = chat.other_members[0];
+  const title = chat.is_group ? chat.name ?? "Group chat" : (other && nicknames.get(other.id)) || other?.display_name || "Chat";
   const avatarName = chat.is_group ? title : chat.other_members[0]?.display_name ?? "?";
   const avatarPath = chat.is_group ? null : chat.other_members[0]?.avatar_url;
   return (
     <Button onClick={onOpen} variant="ghost" className={`w-full h-auto justify-start gap-3 p-3 rounded-lg text-left hover:bg-secondary hover:text-foreground ${active ? "bg-secondary" : ""}`}>
-      {chat.is_group ? (
+      {chat.is_group && chat.icon_path ? (
+        <Avatar displayName={title} avatarPath={chat.icon_path} bucket="chat-backgrounds" size={44} />
+      ) : chat.is_group ? (
         <div className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center">
           <Users className="w-5 h-5" />
         </div>

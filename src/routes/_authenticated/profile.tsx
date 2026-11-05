@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/Avatar";
+import { ImageCropper } from "@/components/ImageCropper";
 import { uploadFile } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { BottomNav } from "@/components/BottomNav";
@@ -46,8 +47,14 @@ function ProfilePage() {
       });
   }, [userId]);
 
-  async function handleAvatar(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  function pickAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (f) setCropFile(f);
+  }
+  async function handleAvatar(file: File) {
+    setCropFile(null);
     if (!file) return;
     try {
       const path = `${userId}/${Date.now()}-${file.name}`;
@@ -99,7 +106,7 @@ function ProfilePage() {
           <Avatar displayName={displayName || "?"} avatarPath={avatarPath} size={72} />
           <label className="cursor-pointer rounded-full bg-background px-4 py-2 text-sm font-medium text-primary hover:opacity-90">
             Change photo
-            <input type="file" accept="image/*" className="hidden" onChange={handleAvatar} />
+            <input type="file" accept="image/*" className="hidden" onChange={pickAvatar} />
           </label>
         </div>
         <form onSubmit={handleSave} className="space-y-3">
@@ -140,6 +147,7 @@ function ProfilePage() {
           </Button>
         </form>
       </section>
+      {cropFile && <ImageCropper file={cropFile} onCancel={() => setCropFile(null)} onDone={(f) => void handleAvatar(f)} />}
       <BottomNav />
     </div>
   );
