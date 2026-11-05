@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/Avatar";
@@ -610,7 +610,7 @@ function ChatThread() {
         <Sheet onClose={() => setShowMembers(false)} title="Members">
           <ul className="mt-4 space-y-2">
             {members.map((m) => (
-              <li key={m.user_id} className="flex items-center gap-3 p-2">
+              <Fragment key={m.user_id}><li className="flex items-center gap-3 p-2">
                 <Link
                   to="/u/$username"
                   params={{ username: m.profile.username }}
@@ -624,7 +624,7 @@ function ChatThread() {
                 </Link>
                 {m.role === "owner" && <span className="text-[10px] uppercase text-primary">Owner</span>}
               </li>
-              {m.user_id !== userId && <li key={`n-${m.user_id}`} className="pl-12 pb-2"><NicknameField ownerId={userId} target={m.profile} current={nicknames.get(m.user_id) ?? ""} /></li>}
+              {m.user_id !== userId && <li key={`n-${m.user_id}`} className="pl-12 pb-2"><NicknameField ownerId={userId} target={m.profile} current={nicknames.get(m.user_id) ?? ""} /></li>}</Fragment>
             ))}
           </ul>
           <div className="mt-4">
