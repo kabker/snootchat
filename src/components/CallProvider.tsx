@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type Peer from "simple-peer";
 import { supabase } from "@/integrations/supabase/client";
-import { mediaConstraints, type CallKind } from "@/lib/call-rules";
+import { fallbackConstraints, mediaConstraints, MIC_GAIN, type CallKind } from "@/lib/call-rules";
 import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Phone, PhoneOff, Video, VideoOff, Loader2 } from "lucide-react";
@@ -39,6 +39,54 @@ function MediaTile({ stream, name, local, kind, connected }: { stream: MediaStre
   </div>;
 }
 
+async function getMedia(kind: CallKind): Promise<MediaStream> {
+  let raw: MediaStream | null = null; let lastError: unknown;
+  for (const c of [mediaConstraints(kind), ...fallbackConstraints(kind)]) {
+    try { raw = await navigator.mediaDevices.getUserMedia(c); break; }
+    catch (e) { lastError = e; if ((e as DOMException)?.name === "NotAllowedError") throw e; }
+  }
+  if (!raw) throw lastError;
+  // Lower microphone sensitivity by sending the mic through a quiet gain stage.
+  try {
+    const ctx = new AudioContext();
+    const src = ctx.createMediaStreamSource(raw);
+    const gain = ctx.createGain(); gain.gain.value = MIC_GAIN;
+    const dest = ctx.createMediaStreamDestination();
+    src.connect(gain).connect(dest);
+    const [processed] = dest.stream.getAudioTracks();
+    const out = new MediaStream([processed, ...raw.getVideoTracks()]);
+    const originals = raw.getTracks();
+    processed.stop = ((stop) => () => { stop.call(processed); originals.forEach(t => t.stop()); void ctx.close(); })(processed.stop);
+    processed.addEventListener("ended", () => originals.forEach(t => t.stop()));
+    // Keep mute toggling working on the real mic too.
+    Object.defineProperty(processed, "enabled", { get: () => originals.find(t => t.kind === "audio")?.enabled ?? true, set: (v: boolean) => originals.filter(t => t.kind === "audio").forEach(t => { t.enabled = v; }) });
+    return out;
+  } catch { return raw; }
+}
+
+// Simple generated ringtone so no audio file is needed.
+function useRingtone(on: boolean, outgoing: boolean) {
+  useEffect(() => {
+    if (!on) return;
+    let ctx: AudioContext | null = null;
+    try { ctx = new AudioContext(); } catch { return; }
+    const c = ctx;
+    const ring = () => {
+      if (c.state === "suspended") void c.resume().catch(() => {});
+      const t = c.currentTime;
+      const pattern = outgoing ? [[0, 1.2]] : [[0, 0.4], [0.6, 0.4]];
+      for (const [start, len] of pattern) for (const f of outgoing ? [440, 480] : [660, 880]) {
+        const o = c.createOscillator(), g = c.createGain();
+        o.frequency.value = f; g.gain.setValueAtTime(0, t + start); g.gain.linearRampToValueAtTime(0.08, t + start + 0.03); g.gain.setValueAtTime(0.08, t + start + len - 0.05); g.gain.linearRampToValueAtTime(0, t + start + len);
+        o.connect(g).connect(c.destination); o.start(t + start); o.stop(t + start + len);
+      }
+    };
+    ring();
+    const timer = setInterval(ring, outgoing ? 3000 : 2000);
+    return () => { clearInterval(timer); void c.close().catch(() => {}); };
+  }, [on, outgoing]);
+}
+
 export function CallProvider({ children, userId }: { children: ReactNode; userId: string | null }) {
   const [active, setActive] = useState<Active | null>(null);
   const activeRef = useRef<Active | null>(null);
@@ -54,6 +102,8 @@ export function CallProvider({ children, userId }: { children: ReactNode; userId
   const peers = useRef(new Map<string, Peer.Instance>());
   const seenSignals = useRef(new Set<string>());
   const generation = useRef(0);
+  useRingtone(!!incoming && !active, false);
+  useRingtone(!!active && tiles.every(t => !t.connected), true);
 
   async function titleFor(call: Call) {
     const { data: chat } = await supabase.from("chats").select("name,is_group").eq("id", call.chat_id).single();
@@ -85,8 +135,8 @@ export function CallProvider({ children, userId }: { children: ReactNode; userId
     let stream: MediaStream | null = null;
     const version = generation.current;
     try {
-      await import("webrtc-adapter");
-      stream = await navigator.mediaDevices.getUserMedia(mediaConstraints(call.kind));
+      await import("webrtc-adapter").catch(() => {});
+      stream = await getMedia(call.kind);
       if (version !== generation.current) { stream.getTracks().forEach(t => t.stop()); return; }
       const { error } = await supabase.from("call_participants").upsert({ call_id: call.id, user_id: userId, state: "joined" });
       if (error) throw error;
@@ -95,7 +145,11 @@ export function CallProvider({ children, userId }: { children: ReactNode; userId
       activeRef.current = value; setActive(value); setIncoming(null); seenSignals.current.clear();
     } catch (error) {
       stream?.getTracks().forEach(track => track.stop());
-      toast.error(error instanceof DOMException ? "Allow microphone and camera access to join the call." : (error as Error).message);
+      const name = (error as DOMException)?.name;
+      toast.error(name === "NotAllowedError" || name === "SecurityError" ? "Allow microphone and camera access to join the call."
+        : name === "NotReadableError" ? "Your microphone or camera is being used by another app. Close it and try again."
+        : name === "NotFoundError" ? "No microphone was found on this device."
+        : (error as Error).message || "Could not start the call.");
     } finally { pending.current = false; setBusy(false); }
   }
 

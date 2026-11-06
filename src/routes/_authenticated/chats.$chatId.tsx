@@ -616,7 +616,7 @@ function ChatThread() {
                   params={{ username: m.profile.username }}
                   className="flex items-center gap-3 flex-1 min-w-0"
                 >
-                  <Avatar displayName={nameOf(m.profile)} avatarPath={m.profile.avatar_url} size={36} />
+                  <Avatar displayName={nameOf(m.profile) ?? ""} avatarPath={m.profile.avatar_url} size={36} />
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{nameOf(m.profile)}</p>
                     <p className="text-xs text-muted-foreground truncate">@{m.profile.username} · {m.status}</p>
