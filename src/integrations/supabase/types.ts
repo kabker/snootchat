@@ -291,6 +291,7 @@ export type Database = {
           groups_tab: boolean
           id: string
           username: string
+          username_changed_at: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -300,6 +301,7 @@ export type Database = {
           groups_tab?: boolean
           id: string
           username: string
+          username_changed_at?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -309,6 +311,7 @@ export type Database = {
           groups_tab?: boolean
           id?: string
           username?: string
+          username_changed_at?: string | null
         }
         Relationships: []
       }
@@ -317,6 +320,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      change_username: { Args: { new_username: string }; Returns: undefined }
       create_dm_chat: { Args: { other_user_id: string }; Returns: string }
       create_group_chat: {
         Args: { group_name: string; member_ids: string[] }
