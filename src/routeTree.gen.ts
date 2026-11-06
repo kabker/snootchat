@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as AuthenticatedCallsRouteImport } from './routes/_authenticated/calls'
 import { Route as AuthenticatedChatsRouteImport } from './routes/_authenticated/chats'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -44,6 +45,11 @@ const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCallsRoute = AuthenticatedCallsRouteImport.update({
+  id: '/calls',
+  path: '/calls',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedChatsRoute = AuthenticatedChatsRouteImport.update({
   id: '/chats',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
   '/verify': typeof VerifyRoute
+  '/calls': typeof AuthenticatedCallsRoute
   '/chats': typeof AuthenticatedChatsRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
   '/verify': typeof VerifyRoute
+  '/calls': typeof AuthenticatedCallsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/chats/$chatId': typeof AuthenticatedChatsChatIdRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/onboarding': typeof OnboardingRoute
   '/verify': typeof VerifyRoute
+  '/_authenticated/calls': typeof AuthenticatedCallsRoute
   '/_authenticated/chats': typeof AuthenticatedChatsRouteWithChildren
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/verify'
+    | '/calls'
     | '/chats'
     | '/profile'
     | '/settings'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/verify'
+    | '/calls'
     | '/profile'
     | '/settings'
     | '/chats/$chatId'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/onboarding'
     | '/verify'
+    | '/_authenticated/calls'
     | '/_authenticated/chats'
     | '/_authenticated/profile'
     | '/_authenticated/settings'
@@ -197,6 +209,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/verify'
       preLoaderRoute: typeof VerifyRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/calls': {
+      id: '/_authenticated/calls'
+      path: '/calls'
+      fullPath: '/calls'
+      preLoaderRoute: typeof AuthenticatedCallsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/chats': {
       id: '/_authenticated/chats'
@@ -257,6 +276,7 @@ const AuthenticatedChatsRouteWithChildren =
   AuthenticatedChatsRoute._addFileChildren(AuthenticatedChatsRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCallsRoute: typeof AuthenticatedCallsRoute
   AuthenticatedChatsRoute: typeof AuthenticatedChatsRouteWithChildren
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -264,6 +284,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCallsRoute: AuthenticatedCallsRoute,
   AuthenticatedChatsRoute: AuthenticatedChatsRouteWithChildren,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
