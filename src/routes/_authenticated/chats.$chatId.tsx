@@ -329,9 +329,14 @@ function ChatThread() {
     else setShowBg(false);
   }
 
-  async function uploadBackground(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const [bgFile, setBgFile] = useState<File | null>(null);
+  function pickBackground(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (f) setBgFile(f);
+  }
+  async function uploadBackground(file: File) {
+    setBgFile(null);
     const path = `${chatId}/${Date.now()}-${file.name}`;
     try {
       await uploadFile("chat-backgrounds", path, file);
@@ -566,6 +571,7 @@ function ChatThread() {
       {chat.is_group && <Button variant="ghost" onClick={() => setShowMembers(true)} className="w-full justify-start h-12"><Users /> Members <ChevronRight className="ml-auto" /></Button>}
     </aside>}
 
+      {bgFile && <ImageCropper file={bgFile} aspect={9 / 16} shape="rect" title="Crop background" onCancel={() => setBgFile(null)} onDone={(f) => void uploadBackground(f)} />}
       {iconFile && <ImageCropper file={iconFile} onCancel={() => setIconFile(null)} onDone={(f) => void uploadGroupIcon(f)} />}
       {showBubble && (
         <Sheet onClose={() => setShowBubble(false)} title="Your bubble color">
@@ -600,7 +606,7 @@ function ChatThread() {
           <label className="mt-4 block cursor-pointer rounded-2xl border border-dashed border-border p-4 text-center hover:bg-secondary">
             <ImageIcon className="w-5 h-5 mx-auto mb-1" />
             <span className="text-sm">Upload custom background</span>
-            <input type="file" accept="image/*" className="hidden" onChange={uploadBackground} />
+            <input type="file" accept="image/*" className="hidden" onChange={pickBackground} />
           </label>
           <p className="mt-2 text-xs text-muted-foreground text-center">Everyone in the chat sees the same background.</p>
         </Sheet>
