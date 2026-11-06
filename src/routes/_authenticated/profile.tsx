@@ -1,3 +1,4 @@
+import { nextUsernameChange } from "@/lib/username-rules";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -27,18 +28,23 @@ function ProfilePage() {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
+  const [savedUsername, setSavedUsername] = useState("");
+  const [changedAt, setChangedAt] = useState<string | null>(null);
+  const nextChange = nextUsernameChange(changedAt);
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     supabase
       .from("profiles")
-      .select("username, display_name, avatar_url, bio")
+      .select("username, display_name, avatar_url, bio, username_changed_at")
       .eq("id", userId)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
           setUsername(data.username);
+          setSavedUsername(data.username);
+          setChangedAt(data.username_changed_at);
           setDisplayName(data.display_name);
           setAvatarPath(data.avatar_url);
           setBio(data.bio ?? "");
@@ -76,6 +82,12 @@ function ProfilePage() {
     if (!displayName.trim()) return toast.error("Display name is required");
     setSaving(true);
     try {
+      if (username.trim().toLowerCase() !== savedUsername) {
+        const { error: uErr } = await supabase.rpc("change_username", { new_username: username });
+        if (uErr) return toast.error(uErr.message);
+        const clean = username.trim().toLowerCase();
+        setUsername(clean); setSavedUsername(clean); setChangedAt(new Date().toISOString());
+      }
       const { error } = await supabase
         .from("profiles")
         .update({ display_name: displayName.trim(), bio: bio.trim().slice(0, 200) })
@@ -114,9 +126,12 @@ function ProfilePage() {
             <label className="text-xs text-muted-foreground">Username</label>
             <input
               value={username}
-              disabled
-              className="w-full rounded-lg bg-input px-4 py-3 opacity-70 cursor-not-allowed mt-1"
+              disabled={!!nextChange}
+              maxLength={30}
+              onChange={(e) => setUsername(e.target.value.replace(/[^a-zA-Z0-9_.]/g, ""))}
+              className="w-full rounded-lg bg-input px-4 py-3 outline-none focus:ring-2 focus:ring-ring mt-1 disabled:opacity-70 disabled:cursor-not-allowed"
             />
+            <p className="text-xs text-muted-foreground mt-1">{nextChange ? `You can change your username again on ${nextChange.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}.` : "You can change your username once every 90 days."}</p>
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Display name</label>

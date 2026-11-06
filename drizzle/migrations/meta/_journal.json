@@ -50,6 +50,13 @@
       "when": 1793895266151,
       "tag": "0006_group_details_and_nicknames",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793984800046,
+      "tag": "0007_username_change_every_90_days",
+      "breakpoints": true
     }
   ]
 }
