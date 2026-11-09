@@ -57,6 +57,13 @@
       "when": 1793984800046,
       "tag": "0007_username_change_every_90_days",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794245544522,
+      "tag": "0008_message_edit_delete",
+      "breakpoints": true
     }
   ]
 }

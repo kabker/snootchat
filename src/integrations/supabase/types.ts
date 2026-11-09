@@ -226,7 +226,9 @@ export type Database = {
           body: string
           chat_id: string
           created_at: string
+          deleted_at: string | null
           delivered_at: string | null
+          edited_at: string | null
           id: string
           read_at: string | null
           sender_id: string
@@ -236,7 +238,9 @@ export type Database = {
           body: string
           chat_id: string
           created_at?: string
+          deleted_at?: string | null
           delivered_at?: string | null
+          edited_at?: string | null
           id?: string
           read_at?: string | null
           sender_id: string
@@ -246,7 +250,9 @@ export type Database = {
           body?: string
           chat_id?: string
           created_at?: string
+          deleted_at?: string | null
           delivered_at?: string | null
+          edited_at?: string | null
           id?: string
           read_at?: string | null
           sender_id?: string
