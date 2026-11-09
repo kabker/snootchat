@@ -4,7 +4,7 @@
 - [x] Preserve phone navigation and verify layouts.
 - [x] Check page metadata and preview errors.
 
-# Voice and video calls
+# Voice and video calls (removed by request)
 - [x] Add secure call rooms and signaling for accepted chat members.
 - [x] Add separate voice/video buttons and incoming/group call controls.
 - [x] Verify calling, permissions, cleanup, and preview errors.

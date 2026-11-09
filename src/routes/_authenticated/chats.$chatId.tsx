@@ -5,11 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/Avatar";
 import { bubbleClasses, BUBBLE_COLORS, CHAT_BACKGROUNDS, type BubbleColor, type PresetId } from "@/lib/chat-presets";
 import { resolveStorageUrl, uploadFile } from "@/lib/storage";
-import { ArrowLeft, Check, CheckCheck, Image as ImageIcon, Info, Palette, Send, Settings, Users, X, UserRound, ChevronRight, Phone, Video, Paperclip, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, CheckCheck, Image as ImageIcon, Info, Palette, Send, Settings, Users, X, UserRound, ChevronRight, Paperclip, Loader2 } from "lucide-react";
 import type { ProfileLite } from "@/lib/chats";
 import { UserSearch } from "@/components/UserSearch";
 import { Button } from "@/components/ui/button";
-import { useCalls } from "@/components/CallProvider";
 import { MessageImage } from "@/components/MessageImage";
 import { ImageCropper } from "@/components/ImageCropper";
 import { useNicknames, saveNickname } from "@/lib/nicknames";
@@ -60,7 +59,6 @@ function ChatThread() {
   const { chatId } = Route.useParams();
   const { userId } = Route.useRouteContext();
   const navigate = useNavigate();
-  const { startCall, busy: callBusy } = useCalls();
   const attachmentInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -422,8 +420,6 @@ function ChatThread() {
                 : `@${others[0]?.profile.username ?? ""}`}
           </p>
         </div>
-        <Button variant="ghost" size="icon" className="rounded-full text-primary" aria-label="Voice call" title="Voice call" disabled={!canCall(myMembership.status) || callBusy} onClick={() => void startCall(chatId, "voice")}><Phone className="size-5" /></Button>
-        <Button variant="ghost" size="icon" className="rounded-full text-primary" aria-label="Video call" title="Video call" disabled={!canCall(myMembership.status) || callBusy} onClick={() => void startCall(chatId, "video")}><Video className="size-5" /></Button>
         <Button variant="ghost" size="icon" title="Chat customization" onClick={() => setShowBubble(true)} className="hidden sm:inline-flex p-2 rounded-full hover:bg-secondary" aria-label="Bubble color">
           <Palette className="w-5 h-5" />
         </Button>
