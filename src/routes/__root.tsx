@@ -14,7 +14,6 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
-import { CallProvider } from "@/components/CallProvider";
 
 function NotFoundComponent() {
   return (
@@ -114,7 +113,7 @@ function RootComponent() {
   }, [router, queryClient]);
   return (
     <QueryClientProvider client={queryClient}>
-      <CallProvider userId={callUserId}><Outlet /></CallProvider>
+      <Outlet />
       <Toaster theme="light" position="top-center" richColors />
     </QueryClientProvider>
   );
